@@ -1,0 +1,19 @@
+services:
+  frontend:
+    container_name: mui-tailwind-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.local
+    environment:
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./frontend:/code
+      - /code/.next
+  reverse-proxy:
+    depends_on:
+      - frontend
+    image: caddy:latest
+    ports:
+      - 3000:3000
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile

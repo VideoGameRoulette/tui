@@ -1,0 +1,43 @@
+---
+description: Enforce Yarn-only package management commands
+alwaysApply: true
+---
+
+# Yarn Only Package Management
+
+Use `yarn` for all package manager operations in this project.
+
+## Required
+
+- Do not use `npm` commands.
+- Do not suggest `npm install`, `npm run`, `npx`, or `package-lock.json`.
+- Never run `yarn build` from the host terminal.
+- Use Docker workflows instead of local build commands.
+- Prefer Yarn command equivalents and `yarn.lock`.
+
+## Command Mapping
+
+```bash
+# ❌ BAD
+npm install
+npm run dev
+npx create-next-app frontend
+yarn build
+
+# ✅ GOOD
+yarn
+yarn dev
+yarn create next-app frontend
+docker compose up --build frontend
+docker compose --profile production up --build frontend-prod
+```
+
+## Dependency Examples
+
+```bash
+# Add dependency
+yarn add @mui/material @emotion/react @emotion/styled
+
+# Add dev dependency
+yarn add -D typescript eslint
+```

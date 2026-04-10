@@ -1,0 +1,29 @@
+---
+description: Enforce 1:1 Tailwind-to-MUI component parity in frontend component files
+globs: frontend/**/*.{ts,tsx,js,jsx}
+alwaysApply: false
+---
+
+# Frontend Tailwind-to-MUI Component Parity
+
+Apply this rule when working in `frontend` component files.
+
+## Required Workflow
+
+1. Use the provided Tailwind URL/reference as the component source of truth.
+2. Implement one component variant at a time.
+3. Recreate Tailwind output in MUI with 1:1 parity (layout, spacing, typography, colors, shadows, radius, and states).
+4. Build and finalize TypeScript first, then produce JavaScript parity version.
+
+## Parity Checklist
+
+- Match responsive behavior at equivalent breakpoints.
+- Match interactive states (`hover`, `focus`, `active`, `disabled`).
+- Preserve accessibility semantics and keyboard behavior.
+- Keep props and structure reusable for cross-project adoption.
+
+## Styling Guidance
+
+- Prefer MUI primitives and `sx` before custom CSS files.
+- Use theme tokens where possible; only hardcode when required for visual parity.
+- If exact parity is impossible, note the delta clearly and choose the closest rendered outcome.

@@ -1,0 +1,45 @@
+---
+description: Build Next.js reusable components from Tailwind references using MUI with 1:1 visual parity
+alwaysApply: true
+---
+
+# Tailwind URL -> MUI Component Workflow
+
+This project builds reusable UI components for Next.js by recreating Tailwind-based component references in Material UI (MUI) with 1:1 visual and behavior parity.
+
+## Core Process
+
+1. Treat each provided Tailwind URL as the source reference for one component or section.
+2. Implement components one by one, not in bulk.
+3. Recreate Tailwind styling in MUI using `sx`, theme tokens, and component props to match layout, spacing, typography, colors, states, and responsive behavior.
+4. Build the TypeScript version first (`.tsx`) and keep props strongly typed.
+5. After TS is stable, create a JavaScript version (`.jsx`) with equivalent API and behavior.
+
+## Output Requirements
+
+- Keep component output visually equivalent to the Tailwind reference.
+- Preserve interaction behavior (hover/focus/active/disabled), breakpoints, and accessibility attributes.
+- Prefer reusable composition patterns and avoid hardcoding one-off page markup.
+- Keep naming and folder structure consistent under `frontend` component directories.
+
+## Implementation Notes
+
+- Use MUI primitives first; add custom wrappers only when they improve reuse.
+- Document any unavoidable differences from the Tailwind reference.
+- When a Tailwind class maps to multiple MUI style rules, preserve the final rendered result over literal class translation.
+
+## Example Mapping
+
+```tsx
+// Tailwind: "px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white"
+<Button
+  sx={{
+    px: 2,
+    py: 1,
+    borderRadius: 1.5,
+    bgcolor: "primary.main",
+    "&:hover": { bgcolor: "primary.dark" },
+    color: "common.white",
+  }}
+/>
+```

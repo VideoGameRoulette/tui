@@ -1,0 +1,27 @@
+---
+description: Chain shell commands with PowerShell-safe syntax on Windows (no &&)
+alwaysApply: true
+---
+
+# Windows PowerShell terminal commands
+
+The default shell in this environment is **Windows PowerShell**. In **Windows PowerShell 5.1** (common on Windows 10), `&&` is **not** a valid statement separator and causes:
+
+`The token '&&' is not a valid statement separator in this version.`
+
+## Do this instead
+
+- **Chain commands** with a semicolon: `cd C:\projects\mui-tailwind\frontend; yarn lint`
+- **Or** run `cd` and the command as **two separate** terminal invocations.
+
+## Examples
+
+```powershell
+# ❌ BAD (fails on Windows PowerShell 5.1)
+cd C:\projects\mui-tailwind\frontend && yarn lint
+
+# ✅ GOOD
+cd C:\projects\mui-tailwind\frontend; yarn lint
+```
+
+PowerShell 7+ supports `&&`; prefer `;` here so commands work regardless of version.

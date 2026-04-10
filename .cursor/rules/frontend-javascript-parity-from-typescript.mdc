@@ -1,0 +1,33 @@
+---
+description: Keep frontend JavaScript component versions in parity with TypeScript source components
+globs: frontend/**/*.{js,jsx}
+alwaysApply: false
+---
+
+# Frontend JavaScript Parity From TypeScript
+
+JavaScript components must mirror the canonical TypeScript component behavior and output.
+
+## Source-of-Truth Rule
+
+- Treat the TypeScript (`.ts`/`.tsx`) component as canonical.
+- Do not introduce JS-only visual or behavioral divergence.
+- Keep props, defaults, rendered structure, and interactions equivalent.
+
+## Parity Requirements
+
+- Maintain 1:1 Tailwind-to-MUI visual fidelity already established in TS.
+- Match responsive behavior and all UI states (`hover`, `focus`, `active`, `disabled`).
+- Preserve accessibility behavior and semantic markup.
+
+## JavaScript Implementation Standards
+
+- Use clear runtime defaults and prop destructuring to mirror TS intent.
+- Add lightweight runtime safeguards where TS types previously enforced constraints.
+- Keep naming and component exports aligned with TS counterparts for portability.
+
+## Maintenance Rules
+
+- When TS components change, update JS parity in the same work cycle.
+- Document any unavoidable deltas and minimize them.
+- Prefer consistency and predictability over JS-specific shortcuts.

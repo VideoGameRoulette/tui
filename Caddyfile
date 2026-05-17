@@ -1,4 +1,4 @@
-:3000
+:3031
 
 reverse_proxy frontend:3000 {
     header_up Host {http.reverse_proxy.upstream.host}

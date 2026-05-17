@@ -1,0 +1,153 @@
+.shell {
+  display: flex;
+  flex: 1;
+  height: 100vh;
+  overflow: hidden;
+  font-family: var(--font-geist-sans);
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebarHeader {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebarTitle {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sidebarNav {
+  padding: 8px 0;
+  flex: 1;
+}
+
+.navItem {
+  display: block;
+  padding: 7px 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: 6px;
+  margin: 1px 8px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.navItem:hover {
+  background: var(--hover);
+  color: var(--text-primary);
+}
+
+.navEmpty {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ── Main canvas ── */
+.canvas {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--background);
+}
+
+.canvasInner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 40px;
+}
+
+/* ── Welcome state ── */
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.welcomeLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.welcomeTitle {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1.15;
+}
+
+.welcomeBody {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 480px;
+}
+
+.codeBlock {
+  margin-top: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  font-family: var(--font-geist-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: pre;
+}
+
+/* ── Component section ── */
+.section {
+  margin-bottom: 56px;
+}
+
+.sectionHeader {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionName {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.sectionDesc {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.stage {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  min-height: 120px;
+}
+

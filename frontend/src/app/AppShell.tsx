@@ -15,6 +15,10 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
@@ -23,6 +27,13 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import CampaignIcon from '@mui/icons-material/Campaign';
+import HomeIcon from '@mui/icons-material/Home';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import TvIcon from '@mui/icons-material/Tv';
+import { NAV_SECTIONS, USER_NAV } from '@/lib/nav';
+import { touchSafeTooltipProps } from '@/lib/mui-touch-tooltip';
+
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const SIDEBAR_W = 280;
@@ -30,10 +41,24 @@ const LOGO_LIGHT = 'https://tailwindcss.com/plus-assets/img/logos/mark.svg?color
 const LOGO_DARK  = 'https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500';
 const USER_IMG   = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80';
 
-const userNav = [
-  { name: 'Your profile', href: '#' },
-  { name: 'Sign out',     href: '#' },
-];
+// Maps every route href → its sidebar icon
+const ITEM_ICON_MAP: Record<string, typeof HomeIcon> = {
+  '/mui':                  HomeIcon,
+  '/mui/demo/datagrid':    TableChartIcon,
+  '/mui/demo/marketing':   CampaignIcon,
+  '/tui':                  HomeIcon,
+  '/tui/demo/datagrid':    TableChartIcon,
+  '/tui/demo/marketing':   CampaignIcon,
+  '/apple':                HomeIcon,
+  '/apple/demo/datagrid':  TableChartIcon,
+  '/apple/demo/marketing': CampaignIcon,
+  '/ads':                  TvIcon,
+};
+
+const navSections = NAV_SECTIONS.map((s) => ({
+  ...s,
+  items: s.items.map((item) => ({ ...item, icon: ITEM_ICON_MAP[item.href] ?? HomeIcon })),
+}));
 
 // ─── Sidebar (proper component — avoids reusing the same JSX object in two
 //     positions of the tree, which React 19 can mis-reconcile) ─────────────────
@@ -100,7 +125,83 @@ function Sidebar({ isDark, onClose, showClose = false }: SidebarProps) {
         )}
       </Box>
 
-      <Divider sx={{ mb: 2 }} />
+      <Divider sx={{ mb: 1.5 }} />
+
+      {/* ── Nav sections ── */}
+      <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        {navSections.map((section, idx) => (
+          <Box key={section.id}>
+            <Typography
+              sx={{
+                px: 1.5,
+                pt: idx === 0 ? 0.5 : 2,
+                pb: 0.5,
+                fontSize: '0.6875rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                color: 'text.disabled',
+              }}
+            >
+              {section.heading}
+            </Typography>
+
+            <List dense disablePadding>
+              {section.items.map((item) => {
+                const active = pathname === item.href;
+                const ItemIcon = item.icon;
+                return (
+                  <ListItemButton
+                    key={item.href}
+                    component="a"
+                    href={item.href}
+                    selected={active}
+                    onClick={onClose}
+                    sx={(t) => ({
+                      borderRadius: 1.5,
+                      mx: 0.5,
+                      mb: 0.25,
+                      py: 0.75,
+                      '&.Mui-selected': {
+                        bgcolor: t.palette.mode === 'dark'
+                          ? 'rgba(255,255,255,0.08)'
+                          : 'rgba(79,70,229,0.08)',
+                        '&:hover': {
+                          bgcolor: t.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.12)'
+                            : 'rgba(79,70,229,0.12)',
+                        },
+                      },
+                    })}
+                  >
+                    <ListItemIcon sx={{ minWidth: 32 }}>
+                      <ItemIcon
+                        sx={{
+                          fontSize: 17,
+                          color: active ? 'primary.main' : 'text.disabled',
+                        }}
+                      />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.label}
+                      slotProps={{
+                        primary: {
+                          style: {
+                            fontSize: '0.875rem',
+                            fontWeight: active ? 700 : 500,
+                          },
+                        },
+                      }}
+                    />
+                  </ListItemButton>
+                );
+              })}
+            </List>
+
+            {idx < navSections.length - 1 && <Divider sx={{ mt: 1.5, mb: 0.5 }} />}
+          </Box>
+        ))}
+      </Box>
 
       {/* ── Settings ── */}
       <Divider sx={{ mb: 1.5 }} />
@@ -168,6 +269,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           open={drawerOpen}
           onClose={closeDrawer}
           keepMounted={false}
+          slotProps={{ root: { keepMounted: false } }}
           sx={{
             display: { xs: 'block', lg: 'none' },
             '& .MuiDrawer-paper': { width: SIDEBAR_W, boxSizing: 'border-box' },
@@ -221,7 +323,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             })}
           >
             {/* Hamburger — mobile only */}
-            <Tooltip title="Open menu">
+            <Tooltip title="Open menu" {...touchSafeTooltipProps}>
               <IconButton
                 onClick={openDrawer}
                 aria-label="Open navigation menu"
@@ -266,7 +368,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
 
               {/* Theme toggle */}
-              <Tooltip title={isDark ? 'Light mode' : 'Dark mode'}>
+              <Tooltip title={isDark ? 'Light mode' : 'Dark mode'} {...touchSafeTooltipProps}>
                 <IconButton
                   onClick={toggleMode}
                   size="small"
@@ -281,7 +383,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Tooltip>
 
               {/* Notifications */}
-              <Tooltip title="Notifications">
+              <Tooltip title="Notifications" {...touchSafeTooltipProps}>
                 <IconButton
                   size="small"
                   aria-label="Notifications"
@@ -308,7 +410,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               />
 
               {/* Profile button */}
-              <Tooltip title="Your account">
+              <Tooltip title="Your account" {...touchSafeTooltipProps}>
                 <IconButton
                   onClick={(e) => setProfileAnchor(e.currentTarget)}
                   aria-label="Open account menu"
@@ -357,7 +459,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   },
                 }}
               >
-                {userNav.map((item) => (
+                {USER_NAV.map((item) => (
                   <MenuItem
                     key={item.name}
                     component="a"

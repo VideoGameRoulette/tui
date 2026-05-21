@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ThemeProvider, alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -38,46 +38,36 @@ import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import AppleLogoIcon from '@/components/icons/AppleLogoIcon';
 import { buildHomeTheme, COLORS } from '@/lib/theme';
+import { NAV_SECTIONS, BOTTOM_NAV_TABS } from '@/lib/nav';
+import { useStoredColorMode } from '@/lib/stored-color-mode';
+import { touchSafeTooltipProps } from '@/lib/mui-touch-tooltip';
 
-// ─── Theme ────────────────────────────────────────────────────────────────────
+// ─── Nav section data ─────────────────────────────────────────────────────────
+// Route data lives in src/lib/nav.ts — add/rename routes there.
 
-const STORAGE_KEY = 'forma-color-scheme';
+const SECTION_STYLES: Record<string, { accentColor: string; accentLight: string }> = {
+  mui:   { accentColor: COLORS.secondary.main, accentLight: COLORS.secondary.light },
+  tui:   { accentColor: COLORS.primary.main,   accentLight: COLORS.primary.light   },
+  apple: { accentColor: '#007AFF',              accentLight: '#409CFF'              },
+  ads:   { accentColor: '#f59e0b',              accentLight: '#fcd34d'              },
+};
 
-// ─── Nav section data (extend items[] to add future pages) ───────────────────
+const ITEM_ICON_MAP: Record<string, typeof HomeIcon> = {
+  '/mui':                 HomeIcon,
+  '/mui/demo/datagrid':   TableChartIcon,
+  '/tui':                 HomeIcon,
+  '/tui/demo/datagrid':   TableChartIcon,
+  '/apple':               HomeIcon,
+  '/apple/demo/datagrid': TableChartIcon,
+};
 
-const navSections = [
-  {
-    id: 'mui',
-    label: 'MUI',
-    heading: 'Material UI',
-    accentColor: COLORS.secondary.main,
-    accentLight: COLORS.secondary.light,
-    items: [
-      { label: 'Home',      href: '/mui',               icon: HomeIcon,       desc: 'Landing page with Tailwind-inspired MUI theme' },
-      { label: 'Data Grid', href: '/mui/demo/datagrid', icon: TableChartIcon, desc: 'DataGrid with sorting, filtering, grouping and CSV/XLS export' },
-    ],
-  },
-  {
-    id: 'tui',
-    label: 'Tailwind',
-    heading: 'Tailwind CSS',
-    accentColor: COLORS.primary.main,
-    accentLight: COLORS.primary.light,
-    items: [
-      { label: 'Home', href: '/tui', icon: HomeIcon, desc: 'Landing page with pure Tailwind v4 classes' },
-    ],
-  },
-  {
-    id: 'apple',
-    label: 'Glass',
-    heading: 'Apple Liquid Glass',
-    accentColor: '#007AFF',
-    accentLight: '#409CFF',
-    items: [
-      { label: 'Home', href: '/apple', icon: HomeIcon, desc: 'Apple-inspired liquid glass design with MUI v9' },
-    ],
-  },
-];
+const navSections = NAV_SECTIONS.map((s) => ({
+  ...s,
+  ...SECTION_STYLES[s.id],
+  items: s.items.map((item) => ({ ...item, icon: ITEM_ICON_MAP[item.href] ?? HomeIcon })),
+}));
+
+const BOTTOM_NAV_ICONS = [HomeIcon, MuiLogoIcon, TailwindLogoIcon, AppleLogoIcon] as const;
 
 // ─── Static content ───────────────────────────────────────────────────────────
 
@@ -133,7 +123,7 @@ const routeCards = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  const [mode, setMode] = useState<'light' | 'dark'>('light');
+  const [mode, toggleMode] = useStoredColorMode();
   const theme = useMemo(() => buildHomeTheme(mode), [mode]);
   const isDark = mode === 'dark';
 
@@ -142,34 +132,21 @@ export default function HomePage() {
   // Keyed by section id
   const [anchors, setAnchors] = useState<Record<string, HTMLElement | null>>({ mui: null, tui: null, apple: null });
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY) as 'light' | 'dark' | null;
-      if (saved === 'light' || saved === 'dark') setMode(saved);
-    } catch {}
-  }, []);
-
-  const toggleMode = useCallback(() => {
-    setMode((prev) => {
-      const next = prev === 'light' ? 'dark' : 'light';
-      try { localStorage.setItem(STORAGE_KEY, next); } catch {}
-      return next;
-    });
-  }, []);
-
   const openMenu  = (id: string, el: HTMLElement) => setAnchors((p) => ({ ...p, [id]: el }));
   const closeMenu = (id: string) => setAnchors((p) => ({ ...p, [id]: null }));
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100vh', bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.page, pt: '60px', pb: { xs: 7, md: 0 } }}>
+      {/* Same shell pattern as MuiShell: header | scroll (footer inside) | bottom nav — no fixed overlap */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.page }}>
 
         {/* ── Nav ── */}
         <Box
           component="header"
           sx={{
-            position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+            flexShrink: 0,
+            position: 'relative', zIndex: 50,
             bgcolor: isDark ? alpha(COLORS.neutral.bg.dark.page, 0.92) : alpha(COLORS.neutral.bg.light.surface, 0.92),
             backdropFilter: 'blur(12px)',
             borderBottom: '1px solid',
@@ -318,7 +295,7 @@ export default function HomePage() {
 
               {/* Right — theme toggle + mobile hamburger */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-                <Tooltip title={isDark ? 'Light mode' : 'Dark mode'}>
+                <Tooltip title={isDark ? 'Light mode' : 'Dark mode'} {...touchSafeTooltipProps}>
                   <IconButton
                     onClick={toggleMode}
                     aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -329,7 +306,7 @@ export default function HomePage() {
                 </Tooltip>
 
                 {/* Hamburger — mobile only */}
-                <Tooltip title="Menu">
+                <Tooltip title="Menu" {...touchSafeTooltipProps}>
                   <IconButton
                     onClick={() => setDrawerOpen(true)}
                     aria-label="Open navigation menu"
@@ -343,136 +320,15 @@ export default function HomePage() {
           </Container>
         </Box>
 
-        {/* ── Mobile nav drawer ── */}
-        <Drawer
-          anchor="left"
-          open={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          keepMounted={false}
-          slotProps={{
-            paper: {
-              sx: {
-                width: 288,
-                boxSizing: 'border-box',
-                bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.surface,
-                borderRight: '1px solid',
-                borderColor: 'divider',
-                display: { md: 'none' },
-              },
-            },
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.page,
           }}
         >
-          {/* Drawer header */}
-          <Box
-            sx={{
-              height: 60,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              px: 2,
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: 'text.primary', letterSpacing: '-0.01em' }}>
-              NextJS Template
-            </Typography>
-            <IconButton
-              onClick={() => setDrawerOpen(false)}
-              size="small"
-              aria-label="Close menu"
-              sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Box>
-
-          {/* Nav sections */}
-          <Box sx={{ overflowY: 'auto', flex: 1, py: 1.5 }}>
-            {navSections.map((section, idx) => (
-              <Box key={section.id}>
-                <Typography
-                  sx={{
-                    px: 2.5, pt: idx === 0 ? 1 : 2, pb: 0.75,
-                    fontSize: '0.6875rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    color: isDark ? section.accentLight : section.accentColor,
-                  }}
-                >
-                  {section.heading}
-                </Typography>
-
-                <List dense disablePadding>
-                  {section.items.map((item) => {
-                    const ItemIcon = item.icon;
-                    return (
-                      <ListItemButton
-                        key={item.href}
-                        component={Link}
-                        href={item.href}
-                        onClick={() => setDrawerOpen(false)}
-                        sx={{
-                          mx: 1,
-                          borderRadius: 1.5,
-                          mb: 0.5,
-                          py: 1,
-                          '&:hover': { bgcolor: isDark ? alpha(section.accentColor, 0.1) : alpha(section.accentColor, 0.06) },
-                        }}
-                      >
-                        <ListItemIcon sx={{ minWidth: 32 }}>
-                          <ItemIcon sx={{ fontSize: 16, color: isDark ? section.accentLight : section.accentColor }} />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={item.label}
-                          secondary={item.desc}
-                          slotProps={{
-                            primary: { style: { fontSize: '0.9375rem', fontWeight: 600 } },
-                            secondary: { style: { fontSize: '0.8125rem', lineHeight: 1.4, marginTop: 2 } },
-                          }}
-                        />
-                      </ListItemButton>
-                    );
-                  })}
-                </List>
-
-                {idx < navSections.length - 1 && <Divider sx={{ mt: 1.5 }} />}
-              </Box>
-            ))}
-
-            {/* Coming soon footer */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2.5, mt: 2 }}>
-              <AddIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
-              <Typography sx={{ fontSize: '0.8125rem', color: 'text.disabled', fontStyle: 'italic' }}>
-                More pages coming soon
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Drawer footer — theme toggle */}
-          <Box
-            sx={{
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              p: 2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-            }}
-          >
-            <IconButton
-              onClick={toggleMode}
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
-            >
-              {isDark ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
-            </IconButton>
-            <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-              {isDark ? 'Light mode' : 'Dark mode'}
-            </Typography>
-          </Box>
-        </Drawer>
 
         {/* ── Hero ── */}
         <Box
@@ -657,43 +513,229 @@ export default function HomePage() {
         </Container>
         </Box>
 
-        {/* ── Footer ── */}
-        <Box sx={{ borderTop: '1px solid', borderColor: 'divider', bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.surface, py: 5 }}>
+        {/* ── Footer (theme-aware; sits in scroll area above bottom nav row) ── */}
+        <Box
+          component="footer"
+          sx={{
+            bgcolor: isDark ? COLORS.neutral.bg.dark.surface : COLORS.neutral.bg.light.surface,
+            borderTop: '1px solid',
+            borderColor: isDark ? COLORS.neutral.border.dark : COLORS.neutral.border.light,
+            py: 4,
+          }}
+        >
           <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 4 } }}>
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem', color: 'text.primary' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.9375rem',
+                  color: isDark ? COLORS.neutral.text.dark.primary : COLORS.neutral.text.light.primary,
+                }}
+              >
                 NextJS Template
               </Typography>
-              <Typography sx={{ fontSize: '0.8125rem', color: 'text.secondary' }}>
-                © 2019 - 2026 In House Cloud Solutions. All rights reserved.
-              </Typography>
+
+              <Box sx={{ flex: 1, textAlign: 'center' }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.75rem',
+                    color: isDark ? COLORS.neutral.text.dark.secondary : COLORS.neutral.text.light.secondary,
+                  }}
+                >
+                  © 2019 - 2026 In House Cloud Solutions. All rights reserved.
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  px: 1.5, py: 0.5,
+                  border: '1px solid',
+                  borderColor: isDark ? COLORS.neutral.border.dark : COLORS.neutral.border.light,
+                  borderRadius: 1,
+                  fontFamily: 'var(--font-geist-mono), monospace',
+                  fontSize: '0.8125rem',
+                  color: isDark ? COLORS.neutral.text.dark.secondary : COLORS.neutral.text.light.secondary,
+                }}
+              >
+                /
+              </Box>
             </Box>
           </Container>
         </Box>
 
-        {/* ── Mobile bottom navigation ── */}
+        </Box>{/* end scroll */}
+
+        {/* ── Mobile bottom bar (toolbar row — same flex slot as MuiShell, not fixed over content) ── */}
         <BottomNavigation
           value={0}
           showLabels
           sx={{
             display: { xs: 'flex', md: 'none' },
-            position: 'fixed',
-            bottom: 0, left: 0, right: 0,
-            zIndex: 1200,
+            flexShrink: 0,
             height: 56,
             borderTop: '1px solid',
             borderColor: 'divider',
             bgcolor: 'background.paper',
             boxShadow: isDark ? '0 -4px 20px rgba(0,0,0,0.3)' : '0 -4px 20px rgba(0,0,0,0.06)',
+            '& .MuiBottomNavigationAction-label': { fontSize: '0.625rem', fontWeight: 500 },
+            '& .MuiBottomNavigationAction-label.Mui-selected': { fontSize: '0.625rem' },
           }}
         >
-          <BottomNavigationAction label="Home"     icon={<HomeIcon />}           component={Link} href="/"      />
-          <BottomNavigationAction label="MUI"      icon={<MuiLogoIcon />}        component={Link} href="/mui"   />
-          <BottomNavigationAction label="Tailwind" icon={<TailwindLogoIcon />}   component={Link} href="/tui"   />
-          <BottomNavigationAction label="Glass"    icon={<AppleLogoIcon />}      component={Link} href="/apple" />
+          {BOTTOM_NAV_TABS.map((tab, i) => {
+            const Icon = BOTTOM_NAV_ICONS[i];
+            return (
+              <BottomNavigationAction
+                key={tab.href}
+                label={tab.label}
+                icon={<Icon />}
+                component={Link}
+                href={tab.href}
+              />
+            );
+          })}
         </BottomNavigation>
 
-      </Box>
+      </Box>{/* end shell */}
+
+      {/* ── Mobile nav drawer (portaled — outside flex shell, same as MuiShell) ── */}
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        keepMounted={false}
+        slotProps={{
+          root: { keepMounted: false },
+          paper: {
+            sx: {
+              width: 288,
+              boxSizing: 'border-box',
+              bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.surface,
+              borderRight: '1px solid',
+              borderColor: 'divider',
+              display: { md: 'none' },
+            },
+          },
+        }}
+      >
+        {/* Drawer header */}
+        <Box
+          sx={{
+            height: 60,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 2,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: 'text.primary', letterSpacing: '-0.01em' }}>
+            NextJS Template
+          </Typography>
+          <IconButton
+            onClick={() => setDrawerOpen(false)}
+            size="small"
+            aria-label="Close menu"
+            sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+
+        {/* Nav sections */}
+        <Box sx={{ overflowY: 'auto', flex: 1, py: 1.5 }}>
+          {navSections.map((section, idx) => (
+            <Box key={section.id}>
+              <Typography
+                sx={{
+                  px: 2.5, pt: idx === 0 ? 1 : 2, pb: 0.75,
+                  fontSize: '0.6875rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  color: isDark ? section.accentLight : section.accentColor,
+                }}
+              >
+                {section.heading}
+              </Typography>
+
+              <List dense disablePadding>
+                {section.items.map((item) => {
+                  const ItemIcon = item.icon;
+                  return (
+                    <ListItemButton
+                      key={item.href}
+                      component={Link}
+                      href={item.href}
+                      onClick={() => setDrawerOpen(false)}
+                      sx={{
+                        mx: 1,
+                        borderRadius: 1.5,
+                        mb: 0.5,
+                        py: 1,
+                        '&:hover': { bgcolor: isDark ? alpha(section.accentColor, 0.1) : alpha(section.accentColor, 0.06) },
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <ItemIcon sx={{ fontSize: 16, color: isDark ? section.accentLight : section.accentColor }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.label}
+                        secondary={item.desc}
+                        slotProps={{
+                          primary: { style: { fontSize: '0.9375rem', fontWeight: 600 } },
+                          secondary: { style: { fontSize: '0.8125rem', lineHeight: 1.4, marginTop: 2 } },
+                        }}
+                      />
+                    </ListItemButton>
+                  );
+                })}
+              </List>
+
+              {idx < navSections.length - 1 && <Divider sx={{ mt: 1.5 }} />}
+            </Box>
+          ))}
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2.5, mt: 2 }}>
+            <AddIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+            <Typography sx={{ fontSize: '0.8125rem', color: 'text.disabled', fontStyle: 'italic' }}>
+              More pages coming soon
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+          }}
+        >
+          <IconButton
+            onClick={toggleMode}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+          >
+            {isDark ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+          </IconButton>
+          <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+            {isDark ? 'Light mode' : 'Dark mode'}
+          </Typography>
+        </Box>
+      </Drawer>
+
     </ThemeProvider>
   );
 }

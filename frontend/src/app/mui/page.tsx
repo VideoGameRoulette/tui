@@ -1,7 +1,5 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
@@ -18,6 +16,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import MuiShell from '@/components/MuiShell';
 import { COLORS } from '@/lib/theme';
+import { useStoredColorMode } from '@/lib/stored-color-mode';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -69,26 +68,9 @@ const stats = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'forma-color-scheme';
-
 export default function MuiPage() {
-  const [mode, setMode] = useState<'light' | 'dark'>('light');
+  const [mode, toggleMode] = useStoredColorMode();
   const isDark = mode === 'dark';
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY) as 'light' | 'dark' | null;
-      if (saved === 'light' || saved === 'dark') setMode(saved);
-    } catch {}
-  }, []);
-
-  const toggleMode = useCallback(() => {
-    setMode((prev) => {
-      const next = prev === 'light' ? 'dark' : 'light';
-      try { localStorage.setItem(STORAGE_KEY, next); } catch {}
-      return next;
-    });
-  }, []);
 
   return (
     <MuiShell colorMode={mode} onToggleMode={toggleMode}>
@@ -101,7 +83,7 @@ export default function MuiPage() {
               : 'linear-gradient(160deg, #eef2ff 0%, #f0f9ff 60%, #f8fafc 100%)',
             borderBottom: '1px solid',
             borderColor: 'divider',
-            minHeight: { xs: 'calc(100vh - 60px - 56px)', md: 'calc(100vh - 60px)' },
+            minHeight: '100%',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -159,7 +141,7 @@ export default function MuiPage() {
               }}
             >
               Material UI gives you the UI components, design tokens, and developer experience to build
-              exceptional web applications — all with Material UI's power and Tailwind's aesthetics.
+              exceptional web applications — all with Material UI&apos;s power and Tailwind&apos;s aesthetics.
             </Typography>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2 }}>
@@ -342,70 +324,62 @@ export default function MuiPage() {
         </Box>
 
         {/* ── Footer ── */}
-        <Box sx={{ bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.dark.surface, py: 8 }}>
-          <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 4, lg: 6 } }}>
+        <Box
+          component="footer"
+          sx={{
+            bgcolor: isDark ? COLORS.neutral.bg.dark.surface : COLORS.neutral.bg.light.surface,
+            borderTop: '1px solid',
+            borderColor: isDark ? COLORS.neutral.border.dark : COLORS.neutral.border.light,
+            py: 4,
+          }}
+        >
+          <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 4 } }}>
             <Box
               sx={{
                 display: 'flex',
-                flexDirection: { xs: 'column', md: 'row' },
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: 6,
-                mb: 8,
+                gap: 2,
               }}
             >
               {/* Brand */}
-              <Box sx={{ maxWidth: 280 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                  <Box sx={{ width: 28, height: 28, borderRadius: 1, bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <MuiLogoIcon sx={{ fontSize: 16, color: 'white' }} />
-                  </Box>
-                  <Typography sx={{ fontWeight: 700, color: COLORS.neutral.text.dark.primary, fontSize: '1rem' }}>Material UI</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ width: 22, height: 22, borderRadius: 1, bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <MuiLogoIcon sx={{ fontSize: 12, color: 'white' }} />
                 </Box>
-                <Typography sx={{ fontSize: '0.9375rem', color: COLORS.neutral.text.dark.secondary, lineHeight: 1.7 }}>
-                  Beautiful UI components for modern React apps. Built with MUI v9.
+                <Typography
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: '0.9375rem',
+                    color: isDark ? COLORS.neutral.text.dark.primary : COLORS.neutral.text.light.primary,
+                  }}
+                >
+                  Material UI
                 </Typography>
               </Box>
 
-              {/* Links */}
-              {[
-                { heading: 'Product', links: ['Features', 'Pricing', 'Changelog', 'Roadmap'] },
-                { heading: 'Developers', links: ['Documentation', 'API Reference', 'Examples', 'GitHub'] },
-                { heading: 'Company', links: ['About', 'Blog', 'Careers', 'Contact'] },
-              ].map((col) => (
-                <Box key={col.heading}>
-                  <Typography sx={{ fontWeight: 700, color: COLORS.neutral.text.dark.primary, mb: 3, fontSize: '0.9375rem' }}>
-                    {col.heading}
-                  </Typography>
-                  <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {col.links.map((l) => (
-                      <Box component="li" key={l}>
-                        <Box
-                          component="a"
-                          href="#"
-                          sx={{ fontSize: '0.9375rem', color: COLORS.neutral.text.dark.secondary, textDecoration: 'none', '&:hover': { color: COLORS.neutral.text.dark.primary }, transition: 'color 0.15s' }}
-                        >
-                          {l}
-                        </Box>
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-              ))}
-            </Box>
+              <Box sx={{ flex: 1, textAlign: 'center' }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.75rem',
+                    color: isDark ? COLORS.neutral.text.dark.secondary : COLORS.neutral.text.light.secondary,
+                  }}
+                >
+                  © 2019 - 2026 In House Cloud Solutions. All rights reserved.
+                </Typography>
+              </Box>
 
-            <Divider sx={{ borderColor: COLORS.neutral.border.dark, mb: 6 }} />
-
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-              <Typography sx={{ fontSize: '0.875rem', color: COLORS.neutral.text.light.secondary }}>
-                © 2019 - 2026 In House Cloud Solutions. All rights reserved.
-              </Typography>
               <Box
                 sx={{
-                  display: 'inline-flex', gap: 0.5,
+                  display: 'inline-flex',
                   px: 1.5, py: 0.5,
-                  border: `1px solid ${COLORS.neutral.border.dark}`, borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: isDark ? COLORS.neutral.border.dark : COLORS.neutral.border.light,
+                  borderRadius: 1,
                   fontFamily: 'var(--font-geist-mono), monospace',
-                  fontSize: '0.8125rem', color: COLORS.neutral.text.light.secondary,
+                  fontSize: '0.8125rem',
+                  color: isDark ? COLORS.neutral.text.dark.secondary : COLORS.neutral.text.light.secondary,
                 }}
               >
                 /mui route

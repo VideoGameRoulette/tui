@@ -1,0 +1,4 @@
+# Vendored
+public/static/admin
+public/static/rest_framework
+docs

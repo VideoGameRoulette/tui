@@ -1,7 +1,5 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
-
 const SIZES: Record<string, number> = {
   'icon-192.png': 192,
   'icon-512.png': 512,

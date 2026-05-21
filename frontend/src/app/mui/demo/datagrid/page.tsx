@@ -1,27 +1,54 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { alpha, useTheme, styled } from '@mui/material/styles';
+import { useStoredColorMode } from '@/lib/stored-color-mode';
+import Link from 'next/link';
+import { ThemeProvider, alpha, styled } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
+import Drawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Snackbar from '@mui/material/Snackbar';
 import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import BottomNavigation from '@mui/material/BottomNavigation';
+import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import AddIcon from '@mui/icons-material/Add';
+import AppleLogoIcon from '@/components/icons/AppleLogoIcon';
 import CancelIcon from '@mui/icons-material/Cancel';
+import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import HomeIcon from '@mui/icons-material/Home';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import MenuIcon from '@mui/icons-material/Menu';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import {
   DataGridPremium,
@@ -40,8 +67,8 @@ import {
   ExportPrint,
 } from '@mui/x-data-grid-premium';
 import { LicenseInfo } from '@mui/x-license';
-import MuiShell from '@/components/MuiShell';
-import { COLORS } from '@/lib/theme';
+import { buildMuiPageTheme, COLORS } from '@/lib/theme';
+import { NAV_SECTIONS, BOTTOM_NAV_TABS } from '@/lib/nav';
 
 LicenseInfo.setLicenseKey(process.env.NEXT_PUBLIC_MUI_X_LICENSE_KEY ?? '');
 
@@ -66,7 +93,6 @@ interface ActionItem {
   danger: boolean;
 }
 
-// Allow custom props through DataGrid slotProps.toolbar
 declare module '@mui/x-data-grid-premium' {
   interface ToolbarPropsOverrides {
     actions: ActionItem[];
@@ -107,11 +133,52 @@ const STATUS_COLOR: Record<Employee['status'], 'success' | 'warning' | 'default'
   Inactive:   'default',
 };
 
+const DEPARTMENTS = ['Engineering', 'Product', 'Design', 'Analytics'] as const;
+const STATUSES: Employee['status'][] = ['Active', 'On Leave', 'Inactive'];
+
+const BLANK_FORM = {
+  name: '',
+  department: 'Engineering',
+  role: '',
+  salary: '',
+  status: 'Active' as Employee['status'],
+  startDate: '',
+  performance: '',
+};
+
 function selCount(model: GridRowSelectionModel, total: number): number {
   return model.type === 'include' ? model.ids.size : total - model.ids.size;
 }
 
-// ─── Styled quick-filter components (expandable search) ───────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+
+// ─── Nav data ─────────────────────────────────────────────────────────────────
+
+const SECTION_STYLES: Record<string, { accentColor: string; accentLight: string }> = {
+  mui:   { accentColor: COLORS.secondary.main, accentLight: COLORS.secondary.light },
+  tui:   { accentColor: COLORS.primary.main,   accentLight: COLORS.primary.light   },
+  apple: { accentColor: '#007AFF',              accentLight: '#409CFF'              },
+};
+
+const ITEM_ICON_MAP: Record<string, typeof HomeIcon> = {
+  '/mui':                HomeIcon,
+  '/mui/demo/datagrid':  TableChartIcon,
+  '/tui':                HomeIcon,
+  '/tui/demo/datagrid':  TableChartIcon,
+  '/apple':              HomeIcon,
+  '/apple/demo/datagrid': TableChartIcon,
+};
+
+const navSections = NAV_SECTIONS.map((s) => ({
+  ...s,
+  ...SECTION_STYLES[s.id],
+  items: s.items.map((item) => ({ ...item, icon: ITEM_ICON_MAP[item.href] ?? HomeIcon })),
+}));
+
+const BOTTOM_NAV_ICONS = [HomeIcon, MuiLogoIcon, TailwindLogoIcon, AppleLogoIcon] as const;
+
+// ─── Expandable quick-filter styled components ────────────────────────────────
 
 type OwnerState = { expanded: boolean };
 
@@ -142,10 +209,9 @@ const StyledSearchField = styled(TextField)<{ ownerState: OwnerState }>(
   }),
 );
 
-// ─── Custom toolbar ───────────────────────────────────────────────────────────
+// ─── Toolbar ──────────────────────────────────────────────────────────────────
 
 function CustomToolbar({ actions, onAction }: { actions: ActionItem[]; onAction: (key: string) => void }) {
-  const theme = useTheme();
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
   return (
@@ -186,7 +252,17 @@ function CustomToolbar({ actions, onAction }: { actions: ActionItem[]; onAction:
         onClose={() => setMenuAnchor(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { elevation: 4, sx: { minWidth: 220, borderRadius: 2 } } }}
+        slotProps={{
+          paper: {
+            elevation: 4,
+            sx: {
+              minWidth: 220,
+              borderRadius: '12px !important',
+              border: '1px solid',
+              borderColor: 'divider',
+            },
+          },
+        }}
       >
         <Box sx={{ px: 2, pt: 1.5, pb: 1 }}>
           <Typography variant="overline" sx={{ fontWeight: 700, letterSpacing: 1.4, color: 'text.secondary' }}>
@@ -195,18 +271,10 @@ function CustomToolbar({ actions, onAction }: { actions: ActionItem[]; onAction:
         </Box>
         <Divider />
 
-        {/* Built-in export actions */}
-        <ExportCsv render={<MenuItem />} onClick={() => setMenuAnchor(null)}>
-          Export CSV
-        </ExportCsv>
-        <ExportExcel render={<MenuItem />} onClick={() => setMenuAnchor(null)}>
-          Export Excel
-        </ExportExcel>
-        <ExportPrint render={<MenuItem />} onClick={() => setMenuAnchor(null)}>
-          Print
-        </ExportPrint>
+        <ExportCsv render={<MenuItem />} onClick={() => setMenuAnchor(null)}>Export CSV</ExportCsv>
+        <ExportExcel render={<MenuItem />} onClick={() => setMenuAnchor(null)}>Export Excel</ExportExcel>
+        <ExportPrint render={<MenuItem />} onClick={() => setMenuAnchor(null)}>Print</ExportPrint>
 
-        {/* Custom actions */}
         {actions.map(({ key, label, icon, dividerBefore, danger }) => (
           <Box key={key}>
             {dividerBefore && <Divider sx={{ my: 0.5 }} />}
@@ -215,7 +283,7 @@ function CustomToolbar({ actions, onAction }: { actions: ActionItem[]; onAction:
               sx={{
                 color: danger ? 'error.main' : 'text.primary',
                 '&:hover': {
-                  bgcolor: danger ? alpha(theme.palette.error.main, 0.08) : 'action.hover',
+                  bgcolor: danger ? alpha('#FF3B30', 0.12) : 'action.hover',
                 },
               }}
             >
@@ -226,7 +294,6 @@ function CustomToolbar({ actions, onAction }: { actions: ActionItem[]; onAction:
         ))}
       </Menu>
 
-      {/* Expandable quick-filter search */}
       <StyledQuickFilter>
         <QuickFilterTrigger
           render={(triggerProps, state) => (
@@ -284,20 +351,29 @@ function CustomToolbar({ actions, onAction }: { actions: ActionItem[]; onAction:
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function DatagridDemoPage() {
-  const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
-  const [rows, setRows]                 = useState<Employee[]>(INITIAL_ROWS);
+export default function MuiDatagridPage() {
+  const [mode, toggleMode] = useStoredColorMode();
+  const [rows, setRows]               = useState<Employee[]>(INITIAL_ROWS);
   const [rowSelection, setRowSelection] = useState<GridRowSelectionModel>(EMPTY_SELECTION);
-  const [groupByDept, setGroupByDept]   = useState(false);
-  const [snackbar, setSnackbar]         = useState<string | null>(null);
+  const [groupByDept, setGroupByDept] = useState(false);
+  const [snackbar, setSnackbar]       = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen]   = useState(false);
+  const [anchors, setAnchors]         = useState<Record<string, HTMLElement | null>>({ mui: null, tui: null, apple: null });
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addForm, setAddForm]         = useState(BLANK_FORM);
 
-  const isDark = colorMode === 'dark';
+  const theme  = buildMuiPageTheme(mode);
+  const isDark = mode === 'dark';
+
+  const openMenu  = (id: string, el: HTMLElement) => setAnchors((p) => ({ ...p, [id]: el }));
+  const closeMenu = (id: string) => setAnchors((p) => ({ ...p, [id]: null }));
 
   const handleAction = useCallback(
     (key: string) => {
       switch (key) {
         case 'add':
-          setSnackbar('Add-record dialog would open here');
+          setAddForm(BLANK_FORM);
+          setAddDialogOpen(true);
           break;
         case 'group':
           setGroupByDept((prev) => {
@@ -332,6 +408,28 @@ export default function DatagridDemoPage() {
     },
     [rowSelection, rows.length],
   );
+
+  const handleAddSubmit = useCallback(() => {
+    if (!addForm.name.trim()) return;
+    setRows((prev) => {
+      const newId = prev.length ? Math.max(...prev.map((r) => r.id)) + 1 : 1;
+      return [
+        ...prev,
+        {
+          id: newId,
+          name: addForm.name.trim(),
+          department: addForm.department,
+          role: addForm.role.trim(),
+          salary: Number(addForm.salary) || 0,
+          status: addForm.status,
+          startDate: addForm.startDate || new Date().toISOString().slice(0, 10),
+          performance: Math.min(5, Math.max(0, Number(addForm.performance) || 0)),
+        },
+      ];
+    });
+    setSnackbar('Employee added');
+    setAddDialogOpen(false);
+  }, [addForm]);
 
   const columns: GridColDef<Employee>[] = [
     { field: 'name',       headerName: 'Name',       flex: 1.2, minWidth: 160 },
@@ -387,15 +485,287 @@ export default function DatagridDemoPage() {
   ];
 
   return (
-    <MuiShell colorMode={colorMode} onToggleMode={() => setColorMode((m) => (m === 'light' ? 'dark' : 'light'))}>
-      <Box sx={{
-        height: 'calc(100vh - 60px)',
-        p: 2,
-        pb: { xs: 'calc(56px + 16px)', md: 2 },
-        display: 'flex',
-        flexDirection: 'column',
-        boxSizing: 'border-box',
-      }}>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+
+      {/* ── Fixed header ── */}
+      <Box
+        component="header"
+        sx={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+          bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.surface,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Box sx={{ px: { xs: 2, sm: 4 } }}>
+          <Box sx={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+
+            {/* Logo */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
+              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <MuiLogoIcon sx={{ fontSize: 18, color: 'white' }} />
+              </Box>
+              <Typography sx={{ fontWeight: 700, fontSize: '1.0625rem', color: 'text.primary', letterSpacing: '-0.01em' }}>
+                Material UI
+              </Typography>
+            </Box>
+
+            {/* Desktop nav */}
+            <Box component="nav" sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
+              {navSections.map((section) => (
+                <Box key={section.id}>
+                  <Button
+                    id={`nav-dg-${section.id}`}
+                    aria-controls={anchors[section.id] ? `menu-dg-${section.id}` : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={Boolean(anchors[section.id])}
+                    onClick={(e) => openMenu(section.id, e.currentTarget)}
+                    endIcon={
+                      <KeyboardArrowDownIcon
+                        sx={{
+                          fontSize: '1rem !important',
+                          transition: 'transform 0.2s',
+                          transform: anchors[section.id] ? 'rotate(180deg)' : 'rotate(0deg)',
+                        }}
+                      />
+                    }
+                    sx={{
+                      color: anchors[section.id]
+                        ? (isDark ? section.accentLight : section.accentColor)
+                        : 'text.secondary',
+                      fontSize: '0.9375rem',
+                      px: 1.5,
+                      '&:hover': { color: isDark ? section.accentLight : section.accentColor, bgcolor: 'action.hover' },
+                    }}
+                  >
+                    {section.label}
+                  </Button>
+
+                  <Menu
+                    id={`menu-dg-${section.id}`}
+                    anchorEl={anchors[section.id]}
+                    open={Boolean(anchors[section.id])}
+                    onClose={() => closeMenu(section.id)}
+                    transformOrigin={{ horizontal: 'left', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+                    slotProps={{
+                      paper: {
+                        elevation: isDark ? 4 : 2,
+                        sx: {
+                          mt: 0.75,
+                          minWidth: 240,
+                          borderRadius: '12px !important',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          bgcolor: isDark ? COLORS.neutral.bg.dark.surface : COLORS.neutral.bg.light.surface,
+                          overflow: 'visible',
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: -5,
+                            left: 20,
+                            width: 10,
+                            height: 10,
+                            bgcolor: isDark ? COLORS.neutral.bg.dark.surface : COLORS.neutral.bg.light.surface,
+                            transform: 'rotate(45deg)',
+                            borderTop: '1px solid',
+                            borderLeft: '1px solid',
+                            borderColor: 'divider',
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+                      <Typography
+                        sx={{
+                          fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase',
+                          letterSpacing: '0.1em', color: isDark ? section.accentLight : section.accentColor,
+                        }}
+                      >
+                        {section.heading}
+                      </Typography>
+                    </Box>
+
+                    {section.items.map((item) => {
+                      const ItemIcon = item.icon;
+                      return (
+                        <MenuItem
+                          key={item.href}
+                          component={Link}
+                          href={item.href}
+                          onClick={() => closeMenu(section.id)}
+                          sx={{
+                            mx: 1, mb: 0.5, borderRadius: 1.5,
+                            display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+                            gap: 0.25, py: 1.25, px: 1.5,
+                            '&:hover': { bgcolor: isDark ? alpha(section.accentColor, 0.1) : alpha(section.accentColor, 0.06) },
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <ItemIcon sx={{ fontSize: 15, color: isDark ? section.accentLight : section.accentColor }} />
+                            <Typography sx={{ fontSize: '0.9375rem', fontWeight: 600, color: 'text.primary' }}>
+                              {item.label}
+                            </Typography>
+                          </Box>
+                          <Typography sx={{ fontSize: '0.8125rem', color: 'text.secondary', lineHeight: 1.5, pl: '23px' }}>
+                            {item.desc}
+                          </Typography>
+                        </MenuItem>
+                      );
+                    })}
+
+                    <Divider sx={{ my: 1 }} />
+                    <Box sx={{ px: 2, pb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <AddIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                      <Typography sx={{ fontSize: '0.8125rem', color: 'text.disabled', fontStyle: 'italic' }}>
+                        More pages coming soon
+                      </Typography>
+                    </Box>
+                  </Menu>
+                </Box>
+              ))}
+            </Box>
+
+            {/* Right — theme toggle + hamburger */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+              <IconButton
+                onClick={toggleMode}
+                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+              >
+                {isDark ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+              </IconButton>
+              <IconButton
+                onClick={() => setDrawerOpen(true)}
+                sx={{ display: { xs: 'flex', md: 'none' }, color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+              >
+                <MenuIcon />
+              </IconButton>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* ── Mobile drawer ── */}
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        keepMounted={false}
+        sx={{ display: { md: 'none' } }}
+        slotProps={{
+          root: { keepMounted: false },
+          paper: {
+            sx: {
+              width: 280,
+              boxSizing: 'border-box',
+              bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.surface,
+            },
+          },
+        }}
+      >
+        <Box
+          sx={{
+            height: 60,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            px: 2, borderBottom: '1px solid', borderColor: 'divider', flexShrink: 0,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ width: 28, height: 28, borderRadius: 1, bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <MuiLogoIcon sx={{ fontSize: 16, color: 'white' }} />
+            </Box>
+            <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: 'text.primary' }}>Material UI</Typography>
+          </Box>
+          <IconButton onClick={() => setDrawerOpen(false)} size="small" aria-label="Close menu" sx={{ color: 'text.secondary' }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ overflowY: 'auto', flex: 1, py: 1.5 }}>
+          {navSections.map((section, idx) => (
+            <Box key={section.id}>
+              <Typography
+                sx={{
+                  px: 2.5, pt: idx === 0 ? 1 : 2, pb: 0.75,
+                  fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em',
+                  color: isDark ? section.accentLight : section.accentColor,
+                }}
+              >
+                {section.heading}
+              </Typography>
+
+              <List dense disablePadding>
+                {section.items.map((item) => {
+                  const ItemIcon = item.icon;
+                  return (
+                    <ListItemButton
+                      key={item.href}
+                      component={Link}
+                      href={item.href}
+                      onClick={() => setDrawerOpen(false)}
+                      sx={{
+                        mx: 1, borderRadius: 1.5, mb: 0.5, py: 1,
+                        '&:hover': { bgcolor: isDark ? alpha(section.accentColor, 0.1) : alpha(section.accentColor, 0.06) },
+                      }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <ItemIcon sx={{ fontSize: 16, color: isDark ? section.accentLight : section.accentColor }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.label}
+                        secondary={item.desc}
+                        slotProps={{
+                          primary:   { style: { fontSize: '0.9375rem', fontWeight: 600 } },
+                          secondary: { style: { fontSize: '0.8125rem', lineHeight: 1.4, marginTop: 2 } },
+                        }}
+                      />
+                    </ListItemButton>
+                  );
+                })}
+              </List>
+
+              {idx < navSections.length - 1 && <Divider sx={{ mt: 1.5 }} />}
+            </Box>
+          ))}
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2.5, mt: 2 }}>
+            <AddIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+            <Typography sx={{ fontSize: '0.8125rem', color: 'text.disabled', fontStyle: 'italic' }}>
+              More pages coming soon
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ borderTop: '1px solid', borderColor: 'divider', p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <IconButton
+            onClick={() => { toggleMode(); setDrawerOpen(false); }}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            sx={{ color: 'text.secondary' }}
+          >
+            {isDark ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+          </IconButton>
+          <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+            {isDark ? 'Light mode' : 'Dark mode'}
+          </Typography>
+        </Box>
+      </Drawer>
+
+      {/* ── DataGrid content area ── */}
+      <Box
+        sx={{
+          height: '100dvh',
+          pt: { xs: '60px', md: 'calc(60px + 16px)' },
+          pb: { xs: '56px', md: 2 },
+          px: { xs: 0, md: 2 },
+          display: 'flex',
+          flexDirection: 'column',
+          boxSizing: 'border-box',
+          bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.page,
+        }}
+      >
         <DataGridPremium
           rows={rows}
           columns={columns}
@@ -415,34 +785,139 @@ export default function DatagridDemoPage() {
           density="standard"
           showToolbar
           slots={{ toolbar: CustomToolbar }}
-          slotProps={{
-            toolbar: { actions, onAction: handleAction },
-          }}
+          slotProps={{ toolbar: { actions, onAction: handleAction } }}
           sx={{
             flex: 1,
             minHeight: 0,
-            borderRadius: 2,
-            border: 1,
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
+            borderRadius: { xs: 0, md: '16px' },
+            '& .MuiDataGrid-toolbarContainer': {
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            },
             '& .MuiDataGrid-columnHeaders': {
-              bgcolor: isDark
-                ? alpha(COLORS.secondary.main, 0.12)
-                : alpha(COLORS.secondary.main, 0.06),
+              bgcolor: isDark ? COLORS.secondary.bg.dark : COLORS.secondary.bg.light,
+            },
+            '& .MuiDataGrid-virtualScroller': {
+              clipPath: 'inset(0)',
+            },
+            '& .MuiDataGrid-row': {
+              clipPath: 'inset(0 0 0 0)',
+            },
+            '& .MuiDataGrid-cell:not(.MuiDataGrid-cell--pinnedLeft):not(.MuiDataGrid-cell--pinnedRight)': {
+              overflow: 'hidden',
+              clipPath: 'inset(0)',
             },
             '& .MuiDataGrid-row:hover': {
-              bgcolor: isDark
-                ? alpha(COLORS.secondary.main, 0.08)
-                : alpha(COLORS.secondary.main, 0.04),
+              bgcolor: isDark ? alpha(COLORS.secondary.main, 0.08) : alpha(COLORS.secondary.main, 0.04),
             },
             '& .MuiDataGrid-row.Mui-selected': {
-              bgcolor: isDark
-                ? alpha(COLORS.secondary.main, 0.18)
-                : alpha(COLORS.secondary.main, 0.10),
+              bgcolor: isDark ? alpha(COLORS.secondary.main, 0.22) : alpha(COLORS.secondary.main, 0.10),
+            },
+            '& .MuiDataGrid-row.Mui-selected:hover': {
+              bgcolor: isDark ? alpha(COLORS.secondary.main, 0.28) : alpha(COLORS.secondary.main, 0.14),
+            },
+            '& .MuiDataGrid-footerContainer': {
+              borderTop: '1px solid',
+              borderColor: 'divider',
             },
           }}
         />
       </Box>
+
+      {/* ── Mobile bottom nav ── */}
+      <BottomNavigation
+        value={1}
+        showLabels
+        sx={{
+          display: { xs: 'flex', md: 'none' },
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1200,
+          height: 56, borderTop: '1px solid', borderColor: 'divider',
+          bgcolor: 'background.paper',
+          boxShadow: isDark ? '0 -4px 20px rgba(0,0,0,0.3)' : '0 -4px 20px rgba(0,0,0,0.06)',
+        }}
+      >
+        {BOTTOM_NAV_TABS.map((tab, i) => {
+          const Icon = BOTTOM_NAV_ICONS[i];
+          return (
+            <BottomNavigationAction
+              key={tab.href}
+              label={tab.label}
+              icon={<Icon />}
+              component={Link}
+              href={tab.href}
+            />
+          );
+        })}
+      </BottomNavigation>
+
+      {/* ── Add Record Dialog ── */}
+      <Dialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: '16px', border: '1px solid', borderColor: 'divider' } } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.125rem' }}>Add Employee</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '12px !important' }}>
+          <TextField
+            label="Name" value={addForm.name} required autoFocus size="small" fullWidth
+            onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAddSubmit(); }}
+          />
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Department</InputLabel>
+              <Select
+                value={addForm.department}
+                label="Department"
+                onChange={(e) => setAddForm((p) => ({ ...p, department: e.target.value }))}
+              >
+                {DEPARTMENTS.map((d) => <MenuItem key={d} value={d}>{d}</MenuItem>)}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Role" value={addForm.role} size="small" fullWidth
+              onChange={(e) => setAddForm((p) => ({ ...p, role: e.target.value }))}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              label="Salary" type="number" value={addForm.salary} size="small" fullWidth
+              onChange={(e) => setAddForm((p) => ({ ...p, salary: e.target.value }))}
+              slotProps={{ input: { startAdornment: <InputAdornment position="start">$</InputAdornment> } }}
+            />
+            <FormControl size="small" fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={addForm.status}
+                label="Status"
+                onChange={(e) => setAddForm((p) => ({ ...p, status: e.target.value as Employee['status'] }))}
+              >
+                {STATUSES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              label="Start Date" type="date" value={addForm.startDate} size="small" fullWidth
+              onChange={(e) => setAddForm((p) => ({ ...p, startDate: e.target.value }))}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+            <TextField
+              label="Performance (0–5)" type="number" value={addForm.performance} size="small" fullWidth
+              onChange={(e) => setAddForm((p) => ({ ...p, performance: e.target.value }))}
+              slotProps={{ input: { inputProps: { min: 0, max: 5, step: 0.1 } } }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button variant="text" color="inherit" onClick={() => setAddDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleAddSubmit} disabled={!addForm.name.trim()}>
+            Add Employee
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={Boolean(snackbar)}
@@ -451,6 +926,6 @@ export default function DatagridDemoPage() {
         message={snackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
-    </MuiShell>
+    </ThemeProvider>
   );
 }

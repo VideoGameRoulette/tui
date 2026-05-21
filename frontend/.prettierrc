@@ -1,0 +1,15 @@
+{
+  "singleQuote": true,
+  "trailingComma": "all",
+  "endOfLine": "lf",
+  "printWidth": 100,
+  "arrowParens": "avoid",
+  "overrides": [
+    {
+      "files": "*.y?(a)ml",
+      "options": {
+        "singleQuote": false
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ThemeProvider, alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -27,23 +27,25 @@ import BlurOnIcon from '@mui/icons-material/BlurOn';
 import LayersIcon from '@mui/icons-material/Layers';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import HomeIcon from '@mui/icons-material/Home';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AddIcon from '@mui/icons-material/Add';
-import PaletteIcon from '@mui/icons-material/Palette';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
+import Toolbar from '@mui/material/Toolbar';
 import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import AppleLogoIcon from '@/components/icons/AppleLogoIcon';
 import { buildAppleTheme } from '@/lib/theme';
+import { NAV_SECTIONS, BOTTOM_NAV_TABS } from '@/lib/nav';
+import { useStoredColorMode } from '@/lib/stored-color-mode';
+import { touchSafeTooltipProps } from '@/lib/mui-touch-tooltip';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'forma-color-scheme';
-
 const WALLPAPER_LIGHT =
-  'linear-gradient(140deg, #a8d8f0 0%, #c4a8e8 30%, #e8a8c8 60%, #f0c890 90%)';
+  'linear-gradient(140deg, #f0f2f5 0%, #e8eaef 30%, #f5f6f8 60%, #ebedf0 90%)';
 const WALLPAPER_DARK =
   'linear-gradient(140deg, #08000f 0%, #0e0830 30%, #00111e 60%, #000000 100%)';
 
@@ -64,41 +66,34 @@ function glassSx(isDark: boolean, opacity = 0.68) {
   } as const;
 }
 
-// ─── Nav data ─────────────────────────────────────────────────────────────────
+// ─── Per-shell styling ────────────────────────────────────────────────────────
+// Route data lives in src/lib/nav.ts — add/rename routes there.
 
-const navSections = [
-  {
-    id: 'mui',
-    label: 'MUI',
-    heading: 'Material UI',
-    accentColor: '#6366f1',
-    accentLight: '#a5b4fc',
-    items: [
-      { label: 'Home',      href: '/mui',               icon: HomeIcon,       desc: 'Landing page with Tailwind-inspired MUI theme' },
-      { label: 'Data Grid', href: '/mui/demo/datagrid', icon: TableChartIcon, desc: 'DataGrid with sorting, filtering, grouping and CSV/XLS export' },
-    ],
-  },
-  {
-    id: 'tui',
-    label: 'Tailwind',
-    heading: 'Tailwind CSS',
-    accentColor: '#0ea5e9',
-    accentLight: '#7dd3fc',
-    items: [
-      { label: 'Home', href: '/tui', icon: HomeIcon, desc: 'Landing page built with pure Tailwind v4 utility classes' },
-    ],
-  },
-  {
-    id: 'apple',
-    label: 'Glass',
-    heading: 'Apple Liquid Glass',
-    accentColor: '#007AFF',
-    accentLight: '#409CFF',
-    items: [
-      { label: 'Home', href: '/apple', icon: HomeIcon, desc: 'Apple-inspired liquid glass design system with MUI v9' },
-    ],
-  },
-];
+const SECTION_STYLES: Record<string, { accentColor: string; accentLight: string }> = {
+  mui:   { accentColor: '#6366f1', accentLight: '#a5b4fc' },
+  tui:   { accentColor: '#0ea5e9', accentLight: '#7dd3fc' },
+  apple: { accentColor: '#007AFF', accentLight: '#409CFF' },
+};
+
+const ITEM_ICON_MAP: Record<string, typeof HomeIcon> = {
+  '/mui':                  HomeIcon,
+  '/mui/demo/datagrid':    TableChartIcon,
+  '/mui/demo/marketing':   CampaignIcon,
+  '/tui':                  HomeIcon,
+  '/tui/demo/datagrid':    TableChartIcon,
+  '/tui/demo/marketing':   CampaignIcon,
+  '/apple':                HomeIcon,
+  '/apple/demo/datagrid':  TableChartIcon,
+  '/apple/demo/marketing': CampaignIcon,
+};
+
+const navSections = NAV_SECTIONS.map((s) => ({
+  ...s,
+  ...SECTION_STYLES[s.id],
+  items: s.items.map((item) => ({ ...item, icon: ITEM_ICON_MAP[item.href] ?? HomeIcon })),
+}));
+
+const BOTTOM_NAV_ICONS = [HomeIcon, MuiLogoIcon, TailwindLogoIcon, AppleLogoIcon] as const;
 
 // ─── Feature cards ────────────────────────────────────────────────────────────
 
@@ -129,26 +124,11 @@ const features = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AppleGlassPage() {
-  const [mode, setMode]           = useState<'light' | 'dark'>('light');
+  const [mode, toggleMode] = useStoredColorMode();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchors, setAnchors]       = useState<Record<string, HTMLElement | null>>({ mui: null, tui: null, apple: null });
   const theme  = useMemo(() => buildAppleTheme(mode), [mode]);
   const isDark = mode === 'dark';
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY) as 'light' | 'dark' | null;
-      if (saved === 'light' || saved === 'dark') setMode(saved);
-    } catch {}
-  }, []);
-
-  const toggleMode = useCallback(() => {
-    setMode((prev) => {
-      const next = prev === 'light' ? 'dark' : 'light';
-      try { localStorage.setItem(STORAGE_KEY, next); } catch {}
-      return next;
-    });
-  }, []);
 
   const openMenu  = (id: string, el: HTMLElement) => setAnchors((p) => ({ ...p, [id]: el }));
   const closeMenu = (id: string) => setAnchors((p) => ({ ...p, [id]: null }));
@@ -167,11 +147,14 @@ export default function AppleGlassPage() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
-      {/* Fixed wallpaper background */}
-      <Box sx={{ position: 'fixed', inset: 0, zIndex: -1, background: isDark ? WALLPAPER_DARK : WALLPAPER_LIGHT }} />
+      {/* Fixed wallpaper background + decorative circles */}
+      <Box sx={{ position: 'fixed', inset: 0, zIndex: -1, background: isDark ? WALLPAPER_DARK : WALLPAPER_LIGHT }}>
+        <Box sx={{ position: 'absolute', top: -160, right: -160, width: 520, height: 520, borderRadius: '50%', background: alpha('#4f46e5', 0.07), pointerEvents: 'none' }} />
+        <Box sx={{ position: 'absolute', bottom: -120, left: -100, width: 400, height: 400, borderRadius: '50%', background: alpha('#0ea5e9', 0.06), pointerEvents: 'none' }} />
+      </Box>
 
       {/* Content */}
-      <Box sx={{ minHeight: '100vh', pt: '60px', pb: { xs: '56px', md: 0 } }}>
+      <Box sx={{ minHeight: '100vh', pt: '60px' }}>
 
         {/* ── Glass navbar ── */}
         <Box
@@ -324,7 +307,7 @@ export default function AppleGlassPage() {
 
               {/* Right — theme toggle + mobile hamburger */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-                <Tooltip title={isDark ? 'Light mode' : 'Dark mode'}>
+                <Tooltip title={isDark ? 'Light mode' : 'Dark mode'} {...touchSafeTooltipProps}>
                   <IconButton
                     onClick={toggleMode}
                     aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -354,6 +337,7 @@ export default function AppleGlassPage() {
           keepMounted={false}
           sx={{ display: { md: 'none' } }}
           slotProps={{
+            root: { keepMounted: false },
             paper: {
               sx: {
                 width: 280,
@@ -477,7 +461,11 @@ export default function AppleGlassPage() {
         {/* ── Hero ── */}
         <Box
           sx={{
-            minHeight: { xs: 'calc(100vh - 60px - 56px)', md: 'calc(100vh - 60px)' },
+            /* Mobile: exact height between the two fixed toolbars (top 60px + bottom 56px).
+               Use 100dvh so the calculation shrinks correctly when the mobile browser
+               address bar is visible. Desktop: at least full viewport minus the top bar. */
+            height:    { xs: 'calc(100dvh - 60px - 56px)', md: 'auto' },
+            minHeight: { md: 'calc(100dvh - 60px)' },
             ...glassSx(isDark, isDark ? 0.58 : 0.65),
             borderRadius: 0,
             display: 'flex',
@@ -933,6 +921,11 @@ export default function AppleGlassPage() {
           </Container>
         </Box>
 
+        {/* ── Bottom-nav spacer (mobile only) ── */}
+        {/* Toolbar's default minHeight matches BottomNavigation (56 px on mobile)
+            so the footer is never obscured by the fixed bottom bar. */}
+        <Toolbar sx={{ display: { xs: 'flex', md: 'none' } }} />
+
       {/* ── Mobile bottom navigation ── */}
       <BottomNavigation
         value={3}
@@ -943,20 +936,30 @@ export default function AppleGlassPage() {
           bottom: 0, left: 0, right: 0,
           zIndex: 1200,
           height: 56,
-          background: isDark ? 'rgba(28,28,30,0.95)' : 'rgba(255,255,255,0.95)',
-          backdropFilter: 'saturate(180%) blur(20px)',
-          WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+          background: isDark ? 'rgba(20,20,22,0.78)' : 'rgba(255,255,255,0.82)',
+          backdropFilter: 'saturate(180%) blur(24px)',
+          WebkitBackdropFilter: 'saturate(180%) blur(24px)',
           borderTop: '1px solid',
-          borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-          boxShadow: isDark ? '0 -4px 20px rgba(0,0,0,0.4)' : '0 -4px 20px rgba(0,0,0,0.06)',
+          borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)',
+          boxShadow: isDark ? '0 -2px 16px rgba(0,0,0,0.5)' : '0 -2px 16px rgba(0,0,0,0.07)',
           '& .MuiBottomNavigationAction-root': { color: 'text.secondary' },
           '& .MuiBottomNavigationAction-root.Mui-selected': { color: '#007AFF' },
+          '& .MuiBottomNavigationAction-label': { fontSize: '0.625rem' },
+          '& .MuiBottomNavigationAction-label.Mui-selected': { fontSize: '0.625rem' },
         }}
       >
-        <BottomNavigationAction label="Home"     icon={<HomeIcon />}           component={Link} href="/"      />
-        <BottomNavigationAction label="MUI"      icon={<MuiLogoIcon />}        component={Link} href="/mui"   />
-        <BottomNavigationAction label="Tailwind" icon={<TailwindLogoIcon />}   component={Link} href="/tui"   />
-        <BottomNavigationAction label="Glass"    icon={<AppleLogoIcon />}      component={Link} href="/apple" />
+        {BOTTOM_NAV_TABS.map((tab, i) => {
+          const Icon = BOTTOM_NAV_ICONS[i];
+          return (
+            <BottomNavigationAction
+              key={tab.href}
+              label={tab.label}
+              icon={<Icon />}
+              component={Link}
+              href={tab.href}
+            />
+          );
+        })}
       </BottomNavigation>
 
       </Box>

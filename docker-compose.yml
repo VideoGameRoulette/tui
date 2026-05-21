@@ -9,11 +9,39 @@ services:
     volumes:
       - ./frontend:/code
       - /code/.next
+    healthcheck:
+      # Next dev needs time for first compile; Caddy 502s if proxied before :3000 listens
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/ || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 24
+      start_period: 120s
   reverse-proxy:
     depends_on:
-      - frontend
-    image: caddy:latest
+      frontend:
+        condition: service_healthy
+    build:
+      context: ./caddy
+      dockerfile: Dockerfile
     ports:
       - 3031:3031
+    env_file:
+      - .env
+    environment:
+      # Compose interpolates these from project-root .env (see .env.example)
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_DEFAULT_REGION: ${AWS_REGION:-us-east-1}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+  # tunnel:
+  #   image: cloudflare/cloudflared:latest
+  #   command: tunnel --no-autoupdate --url http://frontend:3000
+  #   depends_on:
+  #     - frontend
+  #   restart: unless-stopped
+
+volumes:
+  caddy_data:

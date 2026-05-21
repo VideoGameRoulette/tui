@@ -1,48 +1,23 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import AppleLogoIcon from '@/components/icons/AppleLogoIcon';
+import { NAV_SECTIONS, BOTTOM_NAV_TABS } from '@/lib/nav';
+import { useStoredColorMode } from '@/lib/stored-color-mode';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'forma-color-scheme';
+// Route data lives in src/lib/nav.ts — add/rename routes there.
+const SECTION_STYLES: Record<string, { accentClass: string; bgHoverClass: string }> = {
+  mui:   { accentClass: 'text-indigo-500 dark:text-indigo-400', bgHoverClass: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20' },
+  tui:   { accentClass: 'text-sky-500 dark:text-sky-400',       bgHoverClass: 'hover:bg-sky-50 dark:hover:bg-sky-900/20'       },
+  apple: { accentClass: 'text-blue-500 dark:text-blue-400',     bgHoverClass: 'hover:bg-blue-50 dark:hover:bg-blue-900/20'     },
+};
 
-const navSections = [
-  {
-    id: 'mui',
-    label: 'MUI',
-    heading: 'Material UI',
-    accentClass: 'text-indigo-500 dark:text-indigo-400',
-    bgHoverClass: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20',
-    items: [
-      { label: 'Home',      href: '/mui',               desc: 'Landing page with Tailwind-inspired MUI theme' },
-      { label: 'Data Grid', href: '/mui/demo/datagrid', desc: 'DataGrid with sorting, filtering, grouping and CSV/XLS export' },
-    ],
-  },
-  {
-    id: 'tui',
-    label: 'Tailwind',
-    heading: 'Tailwind CSS',
-    accentClass: 'text-sky-500 dark:text-sky-400',
-    bgHoverClass: 'hover:bg-sky-50 dark:hover:bg-sky-900/20',
-    items: [
-      { label: 'Home', href: '/tui', desc: 'Landing page built with pure Tailwind v4 utility classes' },
-    ],
-  },
-  {
-    id: 'apple',
-    label: 'Glass',
-    heading: 'Apple Liquid Glass',
-    accentClass: 'text-blue-500 dark:text-blue-400',
-    bgHoverClass: 'hover:bg-blue-50 dark:hover:bg-blue-900/20',
-    items: [
-      { label: 'Home', href: '/apple', desc: 'Apple-inspired liquid glass design system' },
-    ],
-  },
-];
+const navSections = NAV_SECTIONS.map((s) => ({ ...s, ...SECTION_STYLES[s.id] }));
 
 const features = [
   {
@@ -115,11 +90,6 @@ const stats = [
   { value: 'MIT', label: 'License' },
 ];
 
-const footerCols = [
-  { heading: 'Product', links: ['Features', 'Pricing', 'Changelog', 'Roadmap'] },
-  { heading: 'Developers', links: ['Documentation', 'API Reference', 'Examples', 'GitHub'] },
-  { heading: 'Company', links: ['About', 'Blog', 'Careers', 'Contact'] },
-];
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -158,35 +128,21 @@ function XMenuIcon() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function TuiPage() {
-  const [isDark, setIsDark] = useState(false);
+  const [mode, toggleMode] = useStoredColorMode();
+  const isDark = mode === 'dark';
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'dark') setIsDark(true);
-    } catch {}
-  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
     return () => { document.documentElement.classList.remove('dark'); };
   }, [isDark]);
 
-  const toggleMode = useCallback(() => {
-    setIsDark((prev) => {
-      const next = !prev;
-      try { localStorage.setItem(STORAGE_KEY, next ? 'dark' : 'light'); } catch {}
-      return next;
-    });
-  }, []);
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pt-[60px] pb-[56px] md:pb-0">
+    <div className="h-dvh flex flex-col bg-slate-50 dark:bg-slate-900">
 
         {/* ── Header ── */}
-        <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+        <header className="shrink-0 relative z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="flex h-[60px] items-center justify-between gap-4">
 
@@ -348,8 +304,11 @@ export default function TuiPage() {
           <div className="fixed inset-0 z-40" onClick={() => setOpenSection(null)} />
         )}
 
+        {/* ── Scrollable content ── */}
+        <main className="flex-1 overflow-y-auto">
+
         {/* ── Hero ── */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-sky-50 via-sky-50 to-slate-50 dark:from-sky-950 dark:via-slate-900 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700 min-h-[calc(100vh-60px-56px)] md:min-h-[calc(100vh-60px)] flex flex-col items-center justify-center px-4 text-center">
+        <div className="relative overflow-hidden bg-gradient-to-br from-sky-50 via-sky-50 to-slate-50 dark:from-sky-950 dark:via-slate-900 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700 min-h-[calc(100dvh-60px-56px)] md:min-h-[calc(100dvh-60px)] flex flex-col items-center justify-center px-4 text-center">
           {/* Decorative blobs */}
           <div className="pointer-events-none absolute -top-32 -right-32 size-[480px] rounded-full bg-sky-500/5" />
           <div className="pointer-events-none absolute -bottom-24 -left-24 size-80 rounded-full bg-cyan-500/5" />
@@ -368,7 +327,7 @@ export default function TuiPage() {
 
             <p className="mx-auto max-w-xl text-[1.0625rem] sm:text-[1.1875rem] leading-relaxed text-slate-600 dark:text-slate-400 mb-7">
               Tailwind UI gives you the UI components, design tokens, and developer experience to build
-              exceptional web applications — all with Tailwind's atomic utility approach.
+              exceptional web applications — all with Tailwind&apos;s atomic utility approach.
             </p>
 
             <div className="flex flex-wrap justify-center gap-4">
@@ -469,75 +428,62 @@ export default function TuiPage() {
         </div>
 
         {/* ── Footer ── */}
-        <footer className="bg-slate-900 dark:bg-slate-950 py-16">
+        <footer className="border-t border-slate-200 bg-white py-8 dark:border-slate-800 dark:bg-slate-950">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row justify-between gap-12 mb-12">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
               {/* Brand */}
-              <div className="max-w-xs">
-                <div className="flex items-center gap-2.5 mb-3">
-                  <div className="flex size-7 items-center justify-center rounded-md bg-sky-500">
-                    <TailwindLogoIcon sx={{ fontSize: 14, color: 'white' }} />
-                  </div>
-                  <span className="text-base font-bold text-slate-100">Tailwind UI</span>
+              <div className="flex items-center gap-2">
+                <div className="flex size-[22px] items-center justify-center rounded-md bg-sky-500">
+                  <TailwindLogoIcon sx={{ fontSize: 12, color: 'white' }} />
                 </div>
-                <p className="text-[0.9375rem] leading-relaxed text-slate-400">
-                  Beautiful UI components for modern React apps. Built with Tailwind v4.
-                </p>
+                <span className="text-[0.9375rem] font-semibold text-slate-900 dark:text-slate-100">
+                  Tailwind UI
+                </span>
               </div>
 
-              {/* Links */}
-              {footerCols.map((col) => (
-                <div key={col.heading}>
-                  <p className="mb-4 text-sm font-bold text-slate-100">{col.heading}</p>
-                  <ul className="space-y-3">
-                    {col.links.map((l) => (
-                      <li key={l}>
-                        <a href="#" className="text-[0.9375rem] text-slate-400 hover:text-slate-100 transition-colors">
-                          {l}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t border-slate-800 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <p className="text-sm text-slate-500">
+              <p className="text-center text-[0.75rem] text-slate-500 dark:text-slate-400 sm:flex-1">
                 © 2019 - 2026 In House Cloud Solutions. All rights reserved.
               </p>
-              <span className="inline-flex rounded border border-slate-700 px-2.5 py-1 font-mono text-[0.8125rem] text-slate-500">
+
+              <span className="inline-flex rounded border border-slate-200 px-2.5 py-1 font-mono text-[0.8125rem] text-slate-600 dark:border-slate-700 dark:text-slate-400">
                 /tui route
               </span>
             </div>
           </div>
         </footer>
 
+        </main>
+
         {/* ── Mobile bottom navigation ── */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex h-14 items-center justify-around bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
-          {([
-            { href: '/',      label: 'Home',     active: false,
-              icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5"><path d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" /><path d="m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z" /></svg> },
-            { href: '/mui',   label: 'MUI',      active: false,
-              icon: <MuiLogoIcon sx={{ fontSize: 20 }} /> },
-            { href: '/tui',   label: 'Tailwind', active: true,
-              icon: <TailwindLogoIcon sx={{ fontSize: 20 }} /> },
-            { href: '/apple', label: 'Glass',    active: false,
-              icon: <AppleLogoIcon sx={{ fontSize: 20 }} /> },
-          ] as { href: string; label: string; active: boolean; icon: React.ReactNode }[]).map((tab) => (
-            <a
-              key={tab.href}
-              href={tab.href}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-1.5 transition-colors ${
-                tab.active
-                  ? 'text-sky-500'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
-              }`}
-            >
-              {tab.icon}
-              <span className="text-[0.625rem] font-medium leading-none">{tab.label}</span>
-            </a>
-          ))}
+        <div className="shrink-0 md:hidden flex h-14 items-center justify-around bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
+          {BOTTOM_NAV_TABS.map((tab) => {
+            const iconMap: Record<string, React.ReactNode> = {
+              '/': (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                  <path d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" />
+                  <path d="m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z" />
+                </svg>
+              ),
+              '/mui':   <MuiLogoIcon sx={{ fontSize: 20 }} />,
+              '/tui':   <TailwindLogoIcon sx={{ fontSize: 20 }} />,
+              '/apple': <AppleLogoIcon sx={{ fontSize: 20 }} />,
+            };
+            const isActive = tab.href === '/tui';
+            return (
+              <a
+                key={tab.href}
+                href={tab.href}
+                className={`flex flex-1 flex-col items-center gap-0.5 py-1.5 transition-colors ${
+                  isActive
+                    ? 'text-sky-500'
+                    : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+              >
+                {iconMap[tab.href]}
+                <span className="text-[0.625rem] font-medium leading-none">{tab.label}</span>
+              </a>
+            );
+          })}
         </div>
 
     </div>

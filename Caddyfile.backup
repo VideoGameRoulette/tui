@@ -1,0 +1,13 @@
+app.inhousecloudsolutions.com {
+	tls {
+		dns route53 {
+			# Required: app has no public A record; empty hosted_zone_id causes SERVFAIL on zone discovery
+			hosted_zone_id Z02508613JPK7FZKGG7BJ
+		}
+	}
+
+	reverse_proxy frontend:3000 {
+		header_up Host {host}
+		flush_interval -1
+	}
+}

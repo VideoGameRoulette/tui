@@ -58,7 +58,3 @@
     --hover: #222;
   }
 }
-
-div[style*='z-index: 100000'] {
-  display: none !important;
-}

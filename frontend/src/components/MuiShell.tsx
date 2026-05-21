@@ -20,6 +20,7 @@ import MenuItem from '@mui/material/MenuItem';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import AddIcon from '@mui/icons-material/Add';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import HomeIcon from '@mui/icons-material/Home';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -31,42 +32,36 @@ import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import AppleLogoIcon from '@/components/icons/AppleLogoIcon';
 import { buildMuiPageTheme, COLORS } from '@/lib/theme';
+import { NAV_SECTIONS, BOTTOM_NAV_TABS } from '@/lib/nav';
 
-// ─── Nav data ────────────────────────────────────────────────────────────────
+// ─── Per-shell styling ────────────────────────────────────────────────────────
+// Route data lives in src/lib/nav.ts — add/rename routes there.
 
-const navSections = [
-  {
-    id: 'mui',
-    label: 'MUI',
-    heading: 'Material UI',
-    accentColor: COLORS.secondary.main,
-    accentLight: COLORS.secondary.light,
-    items: [
-      { label: 'Home',      href: '/mui',               desc: 'Landing page with Tailwind-inspired MUI theme',                      icon: HomeIcon       },
-      { label: 'Data Grid', href: '/mui/demo/datagrid', desc: 'Premium DataGrid with sorting, filtering, grouping and CSV/XLS export', icon: TableChartIcon },
-    ],
-  },
-  {
-    id: 'tui',
-    label: 'Tailwind',
-    heading: 'Tailwind CSS',
-    accentColor: COLORS.primary.main,
-    accentLight: COLORS.primary.light,
-    items: [
-      { label: 'Home', href: '/tui', desc: 'Landing page built with pure Tailwind v4 utility classes', icon: HomeIcon },
-    ],
-  },
-  {
-    id: 'apple',
-    label: 'Glass',
-    heading: 'Apple Liquid Glass',
-    accentColor: '#007AFF',
-    accentLight: '#409CFF',
-    items: [
-      { label: 'Home', href: '/apple', desc: 'Apple-inspired liquid glass design system with MUI v9', icon: HomeIcon },
-    ],
-  },
-];
+const SECTION_STYLES: Record<string, { accentColor: string; accentLight: string }> = {
+  mui:   { accentColor: COLORS.secondary.main, accentLight: COLORS.secondary.light },
+  tui:   { accentColor: COLORS.primary.main,   accentLight: COLORS.primary.light   },
+  apple: { accentColor: '#007AFF',              accentLight: '#409CFF'              },
+};
+
+const ITEM_ICON_MAP: Record<string, typeof HomeIcon> = {
+  '/mui':                  HomeIcon,
+  '/mui/demo/datagrid':    TableChartIcon,
+  '/mui/demo/marketing':   CampaignIcon,
+  '/tui':                  HomeIcon,
+  '/tui/demo/datagrid':    TableChartIcon,
+  '/tui/demo/marketing':   CampaignIcon,
+  '/apple':                HomeIcon,
+  '/apple/demo/datagrid':  TableChartIcon,
+  '/apple/demo/marketing': CampaignIcon,
+};
+
+const navSections = NAV_SECTIONS.map((s) => ({
+  ...s,
+  ...SECTION_STYLES[s.id],
+  items: s.items.map((item) => ({ ...item, icon: ITEM_ICON_MAP[item.href] ?? HomeIcon })),
+}));
+
+const BOTTOM_NAV_ICONS = [HomeIcon, MuiLogoIcon, TailwindLogoIcon, AppleLogoIcon] as const;
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -91,11 +86,15 @@ export default function MuiShell({ colorMode, onToggleMode, children, bottomNavV
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
-      {/* ── Fixed header ── */}
+      {/* ── 3-row shell: header | scrollable content | bottom nav ── */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' }}>
+
+      {/* ── Header ── */}
       <Box
         component="header"
         sx={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+          flexShrink: 0,
+          position: 'relative', zIndex: 50,
           bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.surface,
           borderBottom: '1px solid',
           borderColor: 'divider',
@@ -254,7 +253,49 @@ export default function MuiShell({ colorMode, onToggleMode, children, bottomNavV
         </Container>
       </Box>
 
-      {/* ── Mobile nav drawer ── */}
+      {/* ── Page content ── */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.page,
+        }}
+      >
+        {children}
+      </Box>
+
+      {/* ── Mobile bottom navigation ── */}
+      <BottomNavigation
+        value={bottomNavValue}
+        showLabels
+        sx={{
+          display: { xs: 'flex', md: 'none' },
+          flexShrink: 0,
+          height: 56, borderTop: '1px solid', borderColor: 'divider',
+          bgcolor: 'background.paper',
+          boxShadow: isDark ? '0 -4px 20px rgba(0,0,0,0.3)' : '0 -4px 20px rgba(0,0,0,0.06)',
+          '& .MuiBottomNavigationAction-label': { fontSize: '0.625rem' },
+          '& .MuiBottomNavigationAction-label.Mui-selected': { fontSize: '0.625rem' },
+        }}
+      >
+        {BOTTOM_NAV_TABS.map((tab, i) => {
+          const Icon = BOTTOM_NAV_ICONS[i];
+          return (
+            <BottomNavigationAction
+              key={tab.href}
+              label={tab.label}
+              icon={<Icon />}
+              component={Link}
+              href={tab.href}
+            />
+          );
+        })}
+      </BottomNavigation>
+
+      </Box>{/* end 3-row shell */}
+
+      {/* ── Mobile nav drawer (portaled — unaffected by outer flex) ── */}
       <Drawer
         anchor="left"
         open={drawerOpen}
@@ -262,6 +303,7 @@ export default function MuiShell({ colorMode, onToggleMode, children, bottomNavV
         keepMounted={false}
         sx={{ display: { md: 'none' } }}
         slotProps={{
+          root: { keepMounted: false },
           paper: {
             sx: {
               width: 280,
@@ -361,35 +403,6 @@ export default function MuiShell({ colorMode, onToggleMode, children, bottomNavV
         </Box>
       </Drawer>
 
-      {/* ── Page content ── */}
-      <Box
-        sx={{
-          minHeight: '100vh',
-          pt: '60px',
-          pb: { xs: '56px', md: 0 },
-          bgcolor: isDark ? COLORS.neutral.bg.dark.page : COLORS.neutral.bg.light.page,
-        }}
-      >
-        {children}
-      </Box>
-
-      {/* ── Mobile bottom navigation ── */}
-      <BottomNavigation
-        value={bottomNavValue}
-        showLabels
-        sx={{
-          display: { xs: 'flex', md: 'none' },
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1200,
-          height: 56, borderTop: '1px solid', borderColor: 'divider',
-          bgcolor: 'background.paper',
-          boxShadow: isDark ? '0 -4px 20px rgba(0,0,0,0.3)' : '0 -4px 20px rgba(0,0,0,0.06)',
-        }}
-      >
-        <BottomNavigationAction label="Home"     icon={<HomeIcon />}         component={Link} href="/"      />
-        <BottomNavigationAction label="MUI"      icon={<MuiLogoIcon />}      component={Link} href="/mui"   />
-        <BottomNavigationAction label="Tailwind" icon={<TailwindLogoIcon />} component={Link} href="/tui"   />
-        <BottomNavigationAction label="Glass"    icon={<AppleLogoIcon />}    component={Link} href="/apple" />
-      </BottomNavigation>
     </ThemeProvider>
   );
 }

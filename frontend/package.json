@@ -18,7 +18,9 @@
     "@mui/material": "^9.0.0",
     "@mui/system": "^9.0.1",
     "@mui/x-data-grid-premium": "^9.2.0",
+    "@mui/x-date-pickers": "^9.0.0",
     "@tailwindcss/postcss": "^4.3.0",
+    "dayjs": "^1.11.20",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -30,6 +32,7 @@
     "@types/react-dom": "^19.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "playwright": "^1.60.0",
     "typescript": "^5"
   }
 }

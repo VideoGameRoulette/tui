@@ -57,7 +57,8 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     label:   'Signage',
     heading: 'Digital Ad Signage',
     items: [
-      { label: 'Signage Player', href: '/ads', desc: 'Full-screen digital signage player cycling image and video slides' },
+      { label: 'Signage Player', href: '/ads',         desc: 'Full-screen digital signage player cycling image and video slides' },
+      { label: 'Ad Builder',     href: '/ads/builder', desc: 'Build ad slides with animated text, background images, and timing controls' },
     ],
   },
 ];

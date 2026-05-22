@@ -6,18 +6,11 @@ import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import AppleLogoIcon from '@/components/icons/AppleLogoIcon';
 import { TrustedPartnersMarqueeTailwind } from '@/components/marketing/TrustedPartnersMarqueeTailwind';
-import { NAV_SECTIONS, BOTTOM_NAV_TABS } from '@/lib/nav';
+import { BOTTOM_NAV_TABS } from '@/lib/nav';
 import { useStoredColorMode } from '@/lib/stored-color-mode';
+import { buildTailwindNavSections } from '@/lib/nav-shell-styles';
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-const SECTION_STYLES: Record<string, { accentClass: string; bgHoverClass: string }> = {
-  mui:   { accentClass: 'text-indigo-500 dark:text-indigo-400', bgHoverClass: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20' },
-  tui:   { accentClass: 'text-sky-500 dark:text-sky-400',       bgHoverClass: 'hover:bg-sky-50 dark:hover:bg-sky-900/20'       },
-  apple: { accentClass: 'text-blue-500 dark:text-blue-400',     bgHoverClass: 'hover:bg-blue-50 dark:hover:bg-blue-900/20'     },
-};
-
-const navSections = NAV_SECTIONS.map((s) => ({ ...s, ...SECTION_STYLES[s.id] }));
+const navSections = buildTailwindNavSections();
 
 const SLIDES = [
   {

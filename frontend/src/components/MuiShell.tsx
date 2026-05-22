@@ -20,46 +20,21 @@ import MenuItem from '@mui/material/MenuItem';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import AddIcon from '@mui/icons-material/Add';
-import CampaignIcon from '@mui/icons-material/Campaign';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import HomeIcon from '@mui/icons-material/Home';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import TableChartIcon from '@mui/icons-material/TableChart';
 import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import AppleLogoIcon from '@/components/icons/AppleLogoIcon';
 import { buildMuiPageTheme, COLORS } from '@/lib/theme';
-import { NAV_SECTIONS, BOTTOM_NAV_TABS } from '@/lib/nav';
+import { BOTTOM_NAV_TABS } from '@/lib/nav';
+import { buildNavSectionsWithIcons } from '@/lib/nav-item-icons';
+import { createNavMenuAnchorState, MUI_SECTION_ACCENTS } from '@/lib/nav-shell-styles';
 
-// ─── Per-shell styling ────────────────────────────────────────────────────────
-// Route data lives in src/lib/nav.ts — add/rename routes there.
-
-const SECTION_STYLES: Record<string, { accentColor: string; accentLight: string }> = {
-  mui:   { accentColor: COLORS.secondary.main, accentLight: COLORS.secondary.light },
-  tui:   { accentColor: COLORS.primary.main,   accentLight: COLORS.primary.light   },
-  apple: { accentColor: '#007AFF',              accentLight: '#409CFF'              },
-};
-
-const ITEM_ICON_MAP: Record<string, typeof HomeIcon> = {
-  '/mui':                  HomeIcon,
-  '/mui/demo/datagrid':    TableChartIcon,
-  '/mui/demo/marketing':   CampaignIcon,
-  '/tui':                  HomeIcon,
-  '/tui/demo/datagrid':    TableChartIcon,
-  '/tui/demo/marketing':   CampaignIcon,
-  '/apple':                HomeIcon,
-  '/apple/demo/datagrid':  TableChartIcon,
-  '/apple/demo/marketing': CampaignIcon,
-};
-
-const navSections = NAV_SECTIONS.map((s) => ({
-  ...s,
-  ...SECTION_STYLES[s.id],
-  items: s.items.map((item) => ({ ...item, icon: ITEM_ICON_MAP[item.href] ?? HomeIcon })),
-}));
+const navSections = buildNavSectionsWithIcons(MUI_SECTION_ACCENTS, MUI_SECTION_ACCENTS.mui);
 
 const BOTTOM_NAV_ICONS = [HomeIcon, MuiLogoIcon, TailwindLogoIcon, AppleLogoIcon] as const;
 
@@ -74,7 +49,7 @@ interface MuiShellProps {
 
 export default function MuiShell({ colorMode, onToggleMode, children, bottomNavValue = 1 }: MuiShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [anchors, setAnchors]       = useState<Record<string, HTMLElement | null>>({ mui: null, tui: null, apple: null });
+  const [anchors, setAnchors] = useState(createNavMenuAnchorState);
 
   const theme  = buildMuiPageTheme(colorMode);
   const isDark = colorMode === 'dark';

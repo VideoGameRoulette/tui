@@ -47,7 +47,6 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
-import TableChartIcon from '@mui/icons-material/TableChart';
 import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import {
@@ -68,6 +67,8 @@ import {
 } from '@mui/x-data-grid-premium';
 import { LicenseInfo } from '@mui/x-license';
 import { buildAppleTheme } from '@/lib/theme';
+import { buildNavSectionsWithIcons } from '@/lib/nav-item-icons';
+import { createNavMenuAnchorState, APPLE_GLASS_SECTION_ACCENTS } from '@/lib/nav-shell-styles';
 
 LicenseInfo.setLicenseKey(process.env.NEXT_PUBLIC_MUI_X_LICENSE_KEY ?? '');
 
@@ -169,41 +170,10 @@ function glassSx(isDark: boolean, opacity = 0.68) {
 
 // ─── Nav data ─────────────────────────────────────────────────────────────────
 
-const navSections = [
-  {
-    id: 'mui',
-    label: 'MUI',
-    heading: 'Material UI',
-    accentColor: '#6366f1',
-    accentLight: '#a5b4fc',
-    items: [
-      { label: 'Home',      href: '/mui',               icon: HomeIcon,       desc: 'Landing page with Tailwind-inspired MUI theme' },
-      { label: 'Data Grid', href: '/mui/demo/datagrid', icon: TableChartIcon, desc: 'DataGrid with sorting, filtering, grouping and CSV/XLS export' },
-    ],
-  },
-  {
-    id: 'tui',
-    label: 'Tailwind',
-    heading: 'Tailwind CSS',
-    accentColor: '#0ea5e9',
-    accentLight: '#7dd3fc',
-    items: [
-      { label: 'Home',      href: '/tui',               icon: HomeIcon,       desc: 'Landing page built with pure Tailwind v4 utility classes' },
-      { label: 'Data Grid', href: '/tui/demo/datagrid', icon: TableChartIcon, desc: 'Datagrid with sort, filter, selection and pagination — pure Tailwind' },
-    ],
-  },
-  {
-    id: 'apple',
-    label: 'Glass',
-    heading: 'Apple Liquid Glass',
-    accentColor: '#007AFF',
-    accentLight: '#409CFF',
-    items: [
-      { label: 'Home',      href: '/apple',               icon: HomeIcon,       desc: 'Apple-inspired liquid glass design system with MUI v9' },
-      { label: 'Data Grid', href: '/apple/demo/datagrid', icon: TableChartIcon, desc: 'DataGrid with liquid glass styling, filtering and export' },
-    ],
-  },
-];
+const navSections = buildNavSectionsWithIcons(
+  APPLE_GLASS_SECTION_ACCENTS,
+  APPLE_GLASS_SECTION_ACCENTS.mui,
+);
 
 // ─── Expandable quick-filter styled components ────────────────────────────────
 
@@ -390,7 +360,7 @@ export default function AppleDatagridPage() {
   const [groupByDept, setGroupByDept] = useState(false);
   const [snackbar, setSnackbar]       = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen]   = useState(false);
-  const [anchors, setAnchors]         = useState<Record<string, HTMLElement | null>>({ mui: null, tui: null, apple: null });
+  const [anchors, setAnchors] = useState(createNavMenuAnchorState);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addForm, setAddForm]         = useState(BLANK_FORM);
 

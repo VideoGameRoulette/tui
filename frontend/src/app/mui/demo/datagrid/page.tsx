@@ -47,7 +47,6 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
-import TableChartIcon from '@mui/icons-material/TableChart';
 import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import {
@@ -68,7 +67,9 @@ import {
 } from '@mui/x-data-grid-premium';
 import { LicenseInfo } from '@mui/x-license';
 import { buildMuiPageTheme, COLORS } from '@/lib/theme';
-import { NAV_SECTIONS, BOTTOM_NAV_TABS } from '@/lib/nav';
+import { BOTTOM_NAV_TABS } from '@/lib/nav';
+import { buildNavSectionsWithIcons } from '@/lib/nav-item-icons';
+import { createNavMenuAnchorState, MUI_SECTION_ACCENTS } from '@/lib/nav-shell-styles';
 
 LicenseInfo.setLicenseKey(process.env.NEXT_PUBLIC_MUI_X_LICENSE_KEY ?? '');
 
@@ -155,26 +156,7 @@ function selCount(model: GridRowSelectionModel, total: number): number {
 
 // ─── Nav data ─────────────────────────────────────────────────────────────────
 
-const SECTION_STYLES: Record<string, { accentColor: string; accentLight: string }> = {
-  mui:   { accentColor: COLORS.secondary.main, accentLight: COLORS.secondary.light },
-  tui:   { accentColor: COLORS.primary.main,   accentLight: COLORS.primary.light   },
-  apple: { accentColor: '#007AFF',              accentLight: '#409CFF'              },
-};
-
-const ITEM_ICON_MAP: Record<string, typeof HomeIcon> = {
-  '/mui':                HomeIcon,
-  '/mui/demo/datagrid':  TableChartIcon,
-  '/tui':                HomeIcon,
-  '/tui/demo/datagrid':  TableChartIcon,
-  '/apple':              HomeIcon,
-  '/apple/demo/datagrid': TableChartIcon,
-};
-
-const navSections = NAV_SECTIONS.map((s) => ({
-  ...s,
-  ...SECTION_STYLES[s.id],
-  items: s.items.map((item) => ({ ...item, icon: ITEM_ICON_MAP[item.href] ?? HomeIcon })),
-}));
+const navSections = buildNavSectionsWithIcons(MUI_SECTION_ACCENTS, MUI_SECTION_ACCENTS.mui);
 
 const BOTTOM_NAV_ICONS = [HomeIcon, MuiLogoIcon, TailwindLogoIcon, AppleLogoIcon] as const;
 
@@ -358,7 +340,7 @@ export default function MuiDatagridPage() {
   const [groupByDept, setGroupByDept] = useState(false);
   const [snackbar, setSnackbar]       = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen]   = useState(false);
-  const [anchors, setAnchors]         = useState<Record<string, HTMLElement | null>>({ mui: null, tui: null, apple: null });
+  const [anchors, setAnchors] = useState(createNavMenuAnchorState);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addForm, setAddForm]         = useState(BLANK_FORM);
 

@@ -27,8 +27,6 @@ import BlurOnIcon from '@mui/icons-material/BlurOn';
 import LayersIcon from '@mui/icons-material/Layers';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import HomeIcon from '@mui/icons-material/Home';
-import CampaignIcon from '@mui/icons-material/Campaign';
-import TableChartIcon from '@mui/icons-material/TableChart';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AddIcon from '@mui/icons-material/Add';
 import BottomNavigation from '@mui/material/BottomNavigation';
@@ -38,9 +36,11 @@ import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import AppleLogoIcon from '@/components/icons/AppleLogoIcon';
 import { buildAppleTheme } from '@/lib/theme';
-import { NAV_SECTIONS, BOTTOM_NAV_TABS } from '@/lib/nav';
+import { BOTTOM_NAV_TABS } from '@/lib/nav';
 import { useStoredColorMode } from '@/lib/stored-color-mode';
 import { touchSafeTooltipProps } from '@/lib/mui-touch-tooltip';
+import { buildNavSectionsWithIcons } from '@/lib/nav-item-icons';
+import { createNavMenuAnchorState, APPLE_GLASS_SECTION_ACCENTS } from '@/lib/nav-shell-styles';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -66,32 +66,10 @@ function glassSx(isDark: boolean, opacity = 0.68) {
   } as const;
 }
 
-// ─── Per-shell styling ────────────────────────────────────────────────────────
-// Route data lives in src/lib/nav.ts — add/rename routes there.
-
-const SECTION_STYLES: Record<string, { accentColor: string; accentLight: string }> = {
-  mui:   { accentColor: '#6366f1', accentLight: '#a5b4fc' },
-  tui:   { accentColor: '#0ea5e9', accentLight: '#7dd3fc' },
-  apple: { accentColor: '#007AFF', accentLight: '#409CFF' },
-};
-
-const ITEM_ICON_MAP: Record<string, typeof HomeIcon> = {
-  '/mui':                  HomeIcon,
-  '/mui/demo/datagrid':    TableChartIcon,
-  '/mui/demo/marketing':   CampaignIcon,
-  '/tui':                  HomeIcon,
-  '/tui/demo/datagrid':    TableChartIcon,
-  '/tui/demo/marketing':   CampaignIcon,
-  '/apple':                HomeIcon,
-  '/apple/demo/datagrid':  TableChartIcon,
-  '/apple/demo/marketing': CampaignIcon,
-};
-
-const navSections = NAV_SECTIONS.map((s) => ({
-  ...s,
-  ...SECTION_STYLES[s.id],
-  items: s.items.map((item) => ({ ...item, icon: ITEM_ICON_MAP[item.href] ?? HomeIcon })),
-}));
+const navSections = buildNavSectionsWithIcons(
+  APPLE_GLASS_SECTION_ACCENTS,
+  APPLE_GLASS_SECTION_ACCENTS.mui,
+);
 
 const BOTTOM_NAV_ICONS = [HomeIcon, MuiLogoIcon, TailwindLogoIcon, AppleLogoIcon] as const;
 
@@ -126,7 +104,7 @@ const features = [
 export default function AppleGlassPage() {
   const [mode, toggleMode] = useStoredColorMode();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [anchors, setAnchors]       = useState<Record<string, HTMLElement | null>>({ mui: null, tui: null, apple: null });
+  const [anchors, setAnchors] = useState(createNavMenuAnchorState);
   const theme  = useMemo(() => buildAppleTheme(mode), [mode]);
   const isDark = mode === 'dark';
 

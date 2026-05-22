@@ -27,50 +27,31 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import SpeedOutlinedIcon from '@mui/icons-material/SpeedOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
-import CampaignIcon from '@mui/icons-material/Campaign';
 import CloseIcon from '@mui/icons-material/Close';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import HomeIcon from '@mui/icons-material/Home';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import MenuIcon from '@mui/icons-material/Menu';
-import TableChartIcon from '@mui/icons-material/TableChart';
 import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import AppleLogoIcon from '@/components/icons/AppleLogoIcon';
 import { TrustedPartnersMarqueeMui } from '@/components/marketing/TrustedPartnersMarqueeMui';
 import { buildAppleTheme, COLORS } from '@/lib/theme';
-import { NAV_SECTIONS, BOTTOM_NAV_TABS } from '@/lib/nav';
+import { BOTTOM_NAV_TABS } from '@/lib/nav';
 import { useStoredColorMode } from '@/lib/stored-color-mode';
+import { buildNavSectionsWithIcons } from '@/lib/nav-item-icons';
+import { createNavMenuAnchorState, APPLE_GLASS_SECTION_ACCENTS } from '@/lib/nav-shell-styles';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const WALLPAPER_LIGHT = 'linear-gradient(140deg, #f0f2f5 0%, #e8eaef 30%, #f5f6f8 60%, #ebedf0 90%)';
 const WALLPAPER_DARK  = 'linear-gradient(140deg, #08000f 0%, #0e0830 30%, #00111e 60%, #000000 100%)';
 
-const SECTION_STYLES: Record<string, { accentColor: string; accentLight: string }> = {
-  mui:   { accentColor: '#6366f1', accentLight: '#a5b4fc' },
-  tui:   { accentColor: '#0ea5e9', accentLight: '#7dd3fc' },
-  apple: { accentColor: '#007AFF', accentLight: '#409CFF' },
-};
-
-const ITEM_ICON_MAP: Record<string, typeof HomeIcon> = {
-  '/mui':                  HomeIcon,
-  '/mui/demo/datagrid':    TableChartIcon,
-  '/mui/demo/marketing':   CampaignIcon,
-  '/tui':                  HomeIcon,
-  '/tui/demo/datagrid':    TableChartIcon,
-  '/tui/demo/marketing':   CampaignIcon,
-  '/apple':                HomeIcon,
-  '/apple/demo/datagrid':  TableChartIcon,
-  '/apple/demo/marketing': CampaignIcon,
-};
-
-const navSections = NAV_SECTIONS.map((s) => ({
-  ...s,
-  ...SECTION_STYLES[s.id],
-  items: s.items.map((item) => ({ ...item, icon: ITEM_ICON_MAP[item.href] ?? HomeIcon })),
-}));
+const navSections = buildNavSectionsWithIcons(
+  APPLE_GLASS_SECTION_ACCENTS,
+  APPLE_GLASS_SECTION_ACCENTS.mui,
+);
 
 const BOTTOM_NAV_ICONS = [HomeIcon, MuiLogoIcon, TailwindLogoIcon, AppleLogoIcon] as const;
 
@@ -143,7 +124,7 @@ const FEATURES = [
 export default function AppleMarketingDemo() {
   const [mode, toggleMode] = useStoredColorMode();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [anchors, setAnchors]       = useState<Record<string, HTMLElement | null>>({ mui: null, tui: null, apple: null });
+  const [anchors, setAnchors] = useState(createNavMenuAnchorState);
   const [active, setActive]         = useState(0);
   const [paused, setPaused]         = useState(false);
   const [tickKey, setTickKey]       = useState(0);

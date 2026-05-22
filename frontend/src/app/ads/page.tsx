@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 // ─── Slide types ──────────────────────────────────────────────────────────────
 
@@ -91,9 +91,11 @@ function getDotWindow(total: number, current: number): number[] {
 // ─── Player ───────────────────────────────────────────────────────────────────
 
 export default function AdsPage() {
-  // Populated client-side only (buildPlaylist uses Math.random — would cause
-  // server/client hydration mismatch if called during SSR).
-  const [playlist, setPlaylist] = useState<Slide[]>([]);
+  // Lazy initializer: on the server window is undefined → returns [] for SSR;
+  // on the client it runs once and produces a stable shuffled playlist.
+  const [playlist] = useState<Slide[]>(() =>
+    typeof window === 'undefined' ? [] : buildPlaylist()
+  );
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   /** Programmatic controls visibility — true shows the pause button regardless
@@ -124,9 +126,6 @@ export default function AdsPage() {
   const goTo = useCallback((index: number) => {
     setCurrent(index);
   }, []);
-
-  // ── Populate playlist after mount (avoids SSR/client hydration mismatch) ─────
-  useEffect(() => { setPlaylist(buildPlaylist()); }, []);
 
   // ── Image timer: skip when paused ────────────────────────────────────────────
   useEffect(() => {
@@ -235,7 +234,7 @@ export default function AdsPage() {
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [current, isPaused]);
+  }, [current, isPaused, playlist]);
 
   // ── Swipe / tap handlers ─────────────────────────────────────────────────────
   const handleTouchStart = (e: React.TouchEvent) => {

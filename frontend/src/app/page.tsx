@@ -28,7 +28,6 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import HomeIcon from '@mui/icons-material/Home';
-import TableChartIcon from '@mui/icons-material/TableChart';
 import AddIcon from '@mui/icons-material/Add';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
@@ -38,34 +37,13 @@ import MuiLogoIcon from '@/components/icons/MuiLogoIcon';
 import TailwindLogoIcon from '@/components/icons/TailwindLogoIcon';
 import AppleLogoIcon from '@/components/icons/AppleLogoIcon';
 import { buildHomeTheme, COLORS } from '@/lib/theme';
-import { NAV_SECTIONS, BOTTOM_NAV_TABS } from '@/lib/nav';
+import { BOTTOM_NAV_TABS } from '@/lib/nav';
 import { useStoredColorMode } from '@/lib/stored-color-mode';
 import { touchSafeTooltipProps } from '@/lib/mui-touch-tooltip';
+import { buildNavSectionsWithIcons } from '@/lib/nav-item-icons';
+import { createNavMenuAnchorState, MUI_SECTION_ACCENTS } from '@/lib/nav-shell-styles';
 
-// ─── Nav section data ─────────────────────────────────────────────────────────
-// Route data lives in src/lib/nav.ts — add/rename routes there.
-
-const SECTION_STYLES: Record<string, { accentColor: string; accentLight: string }> = {
-  mui:   { accentColor: COLORS.secondary.main, accentLight: COLORS.secondary.light },
-  tui:   { accentColor: COLORS.primary.main,   accentLight: COLORS.primary.light   },
-  apple: { accentColor: '#007AFF',              accentLight: '#409CFF'              },
-  ads:   { accentColor: '#f59e0b',              accentLight: '#fcd34d'              },
-};
-
-const ITEM_ICON_MAP: Record<string, typeof HomeIcon> = {
-  '/mui':                 HomeIcon,
-  '/mui/demo/datagrid':   TableChartIcon,
-  '/tui':                 HomeIcon,
-  '/tui/demo/datagrid':   TableChartIcon,
-  '/apple':               HomeIcon,
-  '/apple/demo/datagrid': TableChartIcon,
-};
-
-const navSections = NAV_SECTIONS.map((s) => ({
-  ...s,
-  ...SECTION_STYLES[s.id],
-  items: s.items.map((item) => ({ ...item, icon: ITEM_ICON_MAP[item.href] ?? HomeIcon })),
-}));
+const navSections = buildNavSectionsWithIcons(MUI_SECTION_ACCENTS, MUI_SECTION_ACCENTS.mui);
 
 const BOTTOM_NAV_ICONS = [HomeIcon, MuiLogoIcon, TailwindLogoIcon, AppleLogoIcon] as const;
 
@@ -130,7 +108,7 @@ export default function HomePage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Keyed by section id
-  const [anchors, setAnchors] = useState<Record<string, HTMLElement | null>>({ mui: null, tui: null, apple: null });
+  const [anchors, setAnchors] = useState(createNavMenuAnchorState);
 
   const openMenu  = (id: string, el: HTMLElement) => setAnchors((p) => ({ ...p, [id]: el }));
   const closeMenu = (id: string) => setAnchors((p) => ({ ...p, [id]: null }));
